@@ -225,7 +225,11 @@
   <div class="page-head"><div><h1>Perfil do cliente</h1><p>Os dados da tua conta e informações do cliente.</p></div></div>
   <div class="profile-grid">
     <article class="panel profile-card">
-      <div class="profile-avatar" id="profileAvatar">U</div>
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" id="profileAvatar">U</div>
+        <label class="avatar-edit" for="profileAvatarInput" title="Atualizar foto">✎</label>
+        <input id="profileAvatarInput" type="file" accept="image/*" hidden>
+      </div>
       <div class="profile-main">
         <span class="profile-label">Cliente</span>
         <h2 id="profileName">Utilizador</h2>
@@ -245,7 +249,8 @@
   </div>
   <div class="grid-2">
     <article class="panel">
-      <h2>Dados pessoais</h2><p class="muted">Atualiza o nome que aparece no teu painel.</p>
+      <h2>Dados pessoais</h2><p class="muted">Atualiza o nome e a foto que aparecem no teu perfil.</p>
+      <p class="profile-photo-note">Foto JPG, PNG ou WEBP · até 5 MB.</p>
       <div class="big-form single-form"><div><label for="profileEditName">Nome completo</label><input id="profileEditName" type="text" autocomplete="name" placeholder="O teu nome"></div></div>
       <button class="calculate" id="saveProfile">Guardar dados</button>
     </article>

@@ -344,7 +344,15 @@ function initials(name){
 function renderProfile(){
   const name=getUserDisplayName();
   const email=currentUser?.email||"—";
-  $("profileAvatar").textContent=initials(name);
+  const avatar=$("profileAvatar");
+  const savedAvatar=state.avatar||"";
+  avatar.innerHTML="";
+  avatar.style.backgroundImage=savedAvatar?`url("${savedAvatar}")`:"";
+  avatar.style.backgroundSize="cover";
+  avatar.style.backgroundPosition="center";
+  avatar.style.backgroundRepeat="no-repeat";
+  if(savedAvatar){avatar.textContent="";avatar.classList.add("has-photo");}
+  else{avatar.textContent=initials(name);avatar.classList.remove("has-photo");avatar.style.backgroundImage="";}
   $("profileName").textContent=name;
   $("profileEmail").textContent=email;
   $("profileFullName").textContent=name;
@@ -354,6 +362,37 @@ function renderProfile(){
   $("profileStatus").textContent=currentUser?.email_confirmed_at?"✓ E-mail confirmado":"E-mail por confirmar";
   $("profileStatus").classList.toggle("pending",!currentUser?.email_confirmed_at);
   $("profileEditName").value=name;
+}
+
+async function saveProfileAvatar(file){
+  if(!file)return;
+  if(!file.type.startsWith("image/")){toast("Escolhe uma imagem válida.");return;}
+  if(file.size>5*1024*1024){toast("A foto deve ter no máximo 5 MB.");return;}
+  try{
+    const dataUrl=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const img=new Image();
+        img.onload=()=>{
+          const max=420,scale=Math.min(1,max/Math.max(img.width,img.height));
+          const canvas=document.createElement("canvas");
+          canvas.width=Math.max(1,Math.round(img.width*scale));
+          canvas.height=Math.max(1,Math.round(img.height*scale));
+          const ctx=canvas.getContext("2d");
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          resolve(canvas.toDataURL("image/jpeg",0.82));
+        };
+        img.onerror=()=>reject(new Error("Imagem inválida"));
+        img.src=reader.result;
+      };
+      reader.onerror=()=>reject(new Error("Não foi possível ler a imagem"));
+      reader.readAsDataURL(file);
+    });
+    state.avatar=dataUrl;
+    save();
+    renderProfile();
+    toast("Foto de perfil atualizada! ✓");
+  }catch(e){toast("Não foi possível atualizar a foto.");}
 }
 
 function recordHistory(){
@@ -369,6 +408,11 @@ $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
 $("saveSettings").onclick=()=>{state.userName=$("userName").value.trim()||"Utilizador";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;renderDashboard();toast("Definições guardadas!")};
 $("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
+$("profileAvatarInput").addEventListener("change",e=>{
+  const file=e.target.files?.[0];
+  saveProfileAvatar(file);
+  e.target.value="";
+});
 $("saveProfile").onclick=async()=>{
   const name=$("profileEditName").value.trim();
   if(!name){toast("Introduz o teu nome.");return;}

@@ -97,7 +97,7 @@
 <header class="topbar">
   <button class="menu-btn" id="menuBtn" aria-label="Abrir menu"><span></span><span></span><span></span></button>
   <div class="brand"><div class="logo">Meu<span>Capital</span></div><div class="tagline">Planeia hoje, vive melhor amanhã.</div></div>
-  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações"><span class="notification-dot"></span>⌁</button><div class="user"><span class="user-greeting">Olá,</span> <b>Utilizador</b></div><button class="logout-btn" id="logoutBtn">Terminar sessão</button></div>
+  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações"><span class="notification-dot"></span>⌁</button><button class="top-avatar" id="topAvatar" aria-label="Abrir meu perfil">U</button><div class="user"><span class="user-greeting">Olá,</span> <b>Utilizador</b></div><button class="logout-btn" id="logoutBtn">Terminar sessão</button></div>
 </header>
 
 <div class="layout">
@@ -223,6 +223,17 @@
 
 <section class="page hidden" id="page-profile">
   <div class="page-head"><div><h1>Perfil do cliente</h1><p>Os dados da tua conta e informações do cliente.</p></div></div>
+  <div class="client-overview">
+    <article class="panel client-welcome">
+      <div class="client-welcome-main"><span class="panel-kicker">CENTRO DO CLIENTE</span><h2 id="clientWelcomeTitle">A tua vida financeira, num só lugar.</h2><p id="clientWelcomeText" class="muted">Mantém os teus dados atualizados e acompanha a evolução do teu capital.</p></div>
+      <div class="client-level"><span>NÍVEL</span><b id="clientLevel">Inicial</b><small id="clientLevelText">Começa por registar o teu primeiro mês.</small></div>
+    </article>
+    <div class="client-stats">
+      <article class="client-stat"><span>CAPITAL ACUMULADO</span><b id="profileCapital">0 Kz</b><small>poupança + investimentos</small></article>
+      <article class="client-stat"><span>METAS ATIVAS</span><b id="profileGoals">0</b><small>objetivos em acompanhamento</small></article>
+      <article class="client-stat"><span>INVESTIMENTOS</span><b id="profileInvestments">0 Kz</b><small>capital registado</small></article>
+    </div>
+  </div>
   <div class="profile-grid">
     <article class="panel profile-card">
       <div class="profile-avatar-wrap">
@@ -256,6 +267,7 @@
     </article>
     <article class="panel">
       <h2>Segurança</h2><p class="muted">Mantém a tua conta protegida.</p>
+      <div class="security-status"><span class="security-dot"></span><div><b>Conta protegida</b><small id="securityText">A tua sessão está ativa.</small></div></div>
       <button class="secondary-btn full-btn" id="profileChangePassword">Alterar palavra-passe</button>
       <button class="danger-btn full-btn" id="profileLogout">Terminar sessão</button>
     </article>

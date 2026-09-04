@@ -34,6 +34,7 @@ const showApp=(user)=>{
   save();
   const userEl=document.querySelector(".user");
   if(userEl) userEl.innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;
+  renderTopAvatar();
   const greetEl=$("dashboardGreeting");
   if(greetEl) greetEl.textContent=`Bem-vindo, ${state.userName}. Aqui tens uma visão clara do teu capital e do teu mês.`;
   renderDashboard(); renderHistory(); renderProfile();
@@ -341,6 +342,36 @@ function initials(name){
   const parts=String(name||"U").trim().split(/\s+/).filter(Boolean);
   return (parts.slice(0,2).map(x=>x[0]).join("")||"U").toUpperCase();
 }
+
+function renderTopAvatar(){
+  const el=$("topAvatar"); if(!el)return;
+  const name=getUserDisplayName(); const saved=state.avatar||"";
+  el.innerHTML=saved?"":escapeHtml(initials(name));
+  el.style.backgroundImage=saved?`url("${saved}")`:"";
+  el.classList.toggle("has-photo",!!saved);
+}
+function renderClientOverview(){
+  const b=calcBudget();
+  const invested=state.investments.reduce((sum,x)=>sum+(+x.amount||0),0);
+  const saved=state.history.reduce((sum,x)=>sum+(+x.saving||0),0);
+  const capital=Math.max(0,saved)+invested;
+  const goals=state.goals.length;
+  const score=+($('healthScore')?.textContent||0);
+  let level="Inicial", text="Começa por registar o teu primeiro mês.";
+  if(score>=80){level="Excelente";text="Disciplina financeira forte e consistente.";}
+  else if(score>=65){level="Avançado";text="Boa organização. Mantém a consistência.";}
+  else if(score>=45){level="Em evolução";text="Já tens uma base. Agora melhora a margem.";}
+  else if(b.salary){level="Em construção";text="O próximo passo é aumentar a margem de poupança.";}
+  $("profileCapital").textContent=money(capital);
+  $("profileGoals").textContent=goals;
+  $("profileInvestments").textContent=money(invested);
+  $("clientLevel").textContent=level;
+  $("clientLevelText").textContent=text;
+  $("clientWelcomeTitle").textContent=`Olá, ${getUserDisplayName().split(/\s+/)[0]}.`;
+  $("clientWelcomeText").textContent=score>=65?"O teu perfil mostra uma boa evolução. Continua a construir capital com consistência.":"Mantém o perfil atualizado e usa os indicadores para tomar decisões melhores.";
+  $("securityText").textContent=currentUser?.email_confirmed_at?"E-mail confirmado e conta ativa.":"Confirma o teu e-mail para reforçar a segurança.";
+}
+
 function renderProfile(){
   const name=getUserDisplayName();
   const email=currentUser?.email||"—";
@@ -362,6 +393,8 @@ function renderProfile(){
   $("profileStatus").textContent=currentUser?.email_confirmed_at?"✓ E-mail confirmado":"E-mail por confirmar";
   $("profileStatus").classList.toggle("pending",!currentUser?.email_confirmed_at);
   $("profileEditName").value=name;
+  renderTopAvatar();
+  renderClientOverview();
 }
 
 async function saveProfileAvatar(file){
@@ -408,6 +441,8 @@ $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
 $("saveSettings").onclick=()=>{state.userName=$("userName").value.trim()||"Utilizador";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;renderDashboard();toast("Definições guardadas!")};
 $("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
+$("topAvatar").onclick=()=>navigate("profile");
+
 $("profileAvatarInput").addEventListener("change",e=>{
   const file=e.target.files?.[0];
   saveProfileAvatar(file);

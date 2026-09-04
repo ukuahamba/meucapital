@@ -346,9 +346,11 @@ function initials(name){
 function renderTopAvatar(){
   const el=$("topAvatar"); if(!el)return;
   const name=getUserDisplayName(); const saved=state.avatar||"";
-  el.innerHTML=saved?"":escapeHtml(initials(name));
-  el.style.backgroundImage=saved?`url("${saved}")`:"";
+  el.innerHTML=saved
+    ? `<img src="${escapeHtml(saved)}" alt="Foto de perfil" class="top-avatar-img">`
+    : `<span class="top-avatar-initials">${escapeHtml(initials(name))}</span>`;
   el.classList.toggle("has-photo",!!saved);
+  el.title=saved?`Perfil de ${name}`:"Abrir meu perfil";
 }
 function renderClientOverview(){
   const b=calcBudget();
@@ -423,6 +425,7 @@ async function saveProfileAvatar(file){
     });
     state.avatar=dataUrl;
     save();
+    renderTopAvatar();
     renderProfile();
     toast("Foto de perfil atualizada! ✓");
   }catch(e){toast("Não foi possível atualizar a foto.");}

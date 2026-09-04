@@ -263,9 +263,7 @@ const defaults={
   sim:{initial:0,monthly:0,rate:5,years:5},
   investments:[],
   history:[],
-  goals:[],
-  cards:[],
-  transactions:[]
+  goals:[]
 };
 let state=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(defaults);
 function save(){if(currentUser) localStorage.setItem(KEY,JSON.stringify(state))}
@@ -344,18 +342,20 @@ function renderSim(){
 function syncBudgetInputs(prefix=""){
   const p=prefix;state.budget={salary:+$(p+"salary").value||0,fixed:+$(p+"fixed").value||0,variable:+$(p+"variable").value||0,debt:+$(p+"debt").value||0,saving:+$(p+"saving").value||0};save();renderDashboard();
 }
-function renderCards(){
-  const cards=state.cards||[], tx=state.transactions||[];
-  $("cardsList").innerHTML=cards.length?cards.map((c,i)=>`<div class="item-card wallet-card"><div class="wallet-card-main"><div class="wallet-mini-card"><span>MC</span><b>•••• ${escapeHtml(c.last4)}</b></div><div><b>${escapeHtml(c.name)}</b><p>${escapeHtml(c.issuer||"Emissor não indicado")} · ${escapeHtml(c.type)}</p></div></div><button class="danger-btn" onclick="deleteCard(${i})">Remover</button></div>`).join(""):"<div class='empty-state'>Ainda não tens cartões registados.</div>";
-  $("transactionsList").innerHTML=tx.length?tx.slice(0,12).map((t,i)=>`<div class="item-card transaction-card"><div><b>${escapeHtml(t.desc)}</b><p>${escapeHtml(t.category)} · ${escapeHtml(t.date)}</p></div><strong class="${t.type==='Entrada'?'tx-in':'tx-out'}">${t.type==='Entrada'?'+':'-'}${money(t.amount)}</strong><button class="danger-btn" onclick="deleteTransaction(${i})">×</button></div>`).join(""):"<div class='empty-state'>Ainda não existem movimentos.</div>";
-}
-function deleteCard(i){if(!confirm("Remover este cartão do MeuCapital?"))return;state.cards.splice(i,1);save();renderCards();toast("Cartão removido.")}
-function deleteTransaction(i){state.transactions.splice(i,1);save();renderCards();toast("Movimento removido.")}
 function navigate(page){
-  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$("page-"+page).classList.remove("hidden");
-  document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
-  $("sidebar").classList.remove("open");
-  if(page==="calculator")renderCalculator();if(page==="cards")renderCards();if(page==="goals")renderGoals();if(page==="investments")renderInvestments();if(page==="history")renderHistory();if(page==="reports")renderReports();if(page==="profile")renderProfile();if(page==="settings")renderSettings();
+  const target=$("page-"+page);
+  if(!target)return;
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+  target.classList.remove("hidden");
+  document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
+  $("sidebar")?.classList.remove("open");
+  if(page==="calculator")renderCalculator();
+  if(page==="goals")renderGoals();
+  if(page==="investments")renderInvestments();
+  if(page==="history")renderHistory();
+  if(page==="reports")renderReports();
+  if(page==="profile")renderProfile();
+  if(page==="settings")renderSettings();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderCalculator(){
@@ -484,7 +484,12 @@ async function saveProfileAvatar(file){
 function recordHistory(){
   const b=calcBudget();const last=state.history[0]?.total||0;state.history.unshift({date:new Date().toLocaleDateString("pt-AO",{month:"long",year:"numeric"}),salary:b.salary,expenses:b.expenses,saving:b.saving,left:b.left,total:last+b.saving});save();renderHistory();
 }
-document.querySelectorAll(".nav-item,[data-page]").forEach(el=>el.addEventListener("click",e=>{const p=e.currentTarget.dataset.page;if(p)navigate(p)}));
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-page]");
+  if(!el)return;
+  const p=el.dataset.page;
+  if(p){e.preventDefault();navigate(p);}
+});
 $("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
 const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento guardado!");};
 ["salary","fixed","variable","debt","saving"].forEach(id=>$(id).addEventListener("input",()=>{state.budget[id]=+$(id).value||0;save();renderDashboard()}));
@@ -492,8 +497,6 @@ const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onc
 $("calcSave").onclick=()=>{state.budget={salary:+$("calcSalary").value||0,fixed:+$("calcFixed").value||0,variable:+$("calcVariable").value||0,debt:+$("calcDebt").value||0,saving:+$("calcSaving").value||0};save();recordHistory();renderCalculator();renderDashboard();toast("Orçamento guardado!");};
 $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name)return;const target=Number(prompt("Valor da meta em Kz","100000"));if(!target)return;state.goals.push({name,target,saved:0,monthly:state.budget.saving});save();renderGoals();toast("Meta criada!");};
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
-$("addCard").onclick=()=>{const name=$("cardName").value.trim(),issuer=$("cardIssuer").value.trim(),last4=$("cardLast4").value.trim(),type=$("cardType").value;if(!name||!/^[0-9]{4}$/.test(last4)){toast("Indica o nome e exatamente os últimos 4 dígitos.");return;}state.cards=state.cards||[];state.cards.unshift({name,issuer,last4,type});save();$("cardName").value="";$("cardIssuer").value="";$("cardLast4").value="";renderCards();toast("Cartão adicionado com segurança.")};
-$("addTransaction").onclick=()=>{const desc=$("txDesc").value.trim(),amount=+$("txAmount").value||0,type=$("txType").value,category=$("txCategory").value;if(!desc||amount<=0){toast("Indica a descrição e um valor válido.");return;}state.transactions=state.transactions||[];state.transactions.unshift({desc,amount,type,category,date:new Date().toLocaleDateString("pt-AO")});save();$("txDesc").value="";$("txAmount").value="";renderCards();toast("Movimento registado.")};
 $("saveSettings").onclick=()=>{state.userName=$("userName").value.trim()||"Utilizador";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;renderDashboard();toast("Definições guardadas!")};
 $("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
 $("topAvatar").onclick=()=>navigate("profile");

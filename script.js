@@ -2,7 +2,6 @@ const SUPABASE_URL="https://ozwyxcuhhujnhymwqgjb.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_vGMyphDHDA6K1ZoI3anfhQ_rKnM_SzM";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let currentUser=null;
-let authBootFinished=false;
 let pendingSignupEmail="";
 let pendingSignupPassword="";
 let pendingSignupName="";
@@ -78,16 +77,12 @@ const setAccountStorage=(user)=>{
   if(user.user_metadata?.full_name && (!state.userName || state.userName==="Letal" || state.userName==="Utilizador")) state.userName=user.user_metadata.full_name;
 };
 const bootAuth=async()=>{
-  // Evita uma corrida entre a inicialização da sessão e um login clicado pelo utilizador.
-  // Sem isto, o getSession() inicial pode devolver null depois do signIn e voltar a mostrar
-  // a tela de login por cima da aplicação, obrigando a atualizar a página.
   await handlePasswordRecovery();
   const {data:{session}}=await supabaseClient.auth.getSession();
-  authBootFinished=true;
   if(session){
     setAccountStorage(session.user);
     showApp(session.user);
-  } else if(!currentUser){
+  } else {
     showAuth();
   }
 };
@@ -106,20 +101,8 @@ $("loginForm").addEventListener("submit",async(e)=>{
   const email=$("loginEmail").value.trim();
   const password=$("loginPassword").value;
   try{
-    const {data,error}=await withTimeout(supabaseClient.auth.signInWithPassword({email,password}),12000);
-    if(error){
-      setAuthMessage(error.message||"Não foi possível entrar.",true);
-      return;
-    }
-    // Entra imediatamente com a sessão devolvida pelo Supabase, sem exigir atualização da página.
-    if(data?.session){
-      // A sessão devolvida pelo signIn é suficiente: entra na conta imediatamente.
-      // Não dependemos de refresh nem do getSession() inicial.
-      setAccountStorage(data.session.user);
-      showApp(data.session.user);
-      return;
-    }
-    setAuthMessage("Sessão iniciada, mas não foi possível carregar a conta.",true);
+    const {error}=await withTimeout(supabaseClient.auth.signInWithPassword({email,password}),12000);
+    if(error) setAuthMessage(error.message||"Não foi possível entrar.",true);
   }catch(err){
     setAuthMessage(err?.message==="TIMEOUT"?"O servidor está a demorar. Verifica a ligação e tenta novamente.":"Não foi possível entrar.",true);
   }finally{buttonBusy(btn,false);}
@@ -369,20 +352,10 @@ function renderCards(){
 function deleteCard(i){if(!confirm("Remover este cartão do MeuCapital?"))return;state.cards.splice(i,1);save();renderCards();toast("Cartão removido.")}
 function deleteTransaction(i){state.transactions.splice(i,1);save();renderCards();toast("Movimento removido.")}
 function navigate(page){
-  const target=$("page-"+page);
-  if(!target)return;
-  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
-  target.classList.remove("hidden");
-  document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
-  $("sidebar")?.classList.remove("open");
-  if(page==="calculator")renderCalculator();
-  if(page==="cards")renderCards();
-  if(page==="goals")renderGoals();
-  if(page==="investments")renderInvestments();
-  if(page==="history")renderHistory();
-  if(page==="reports")renderReports();
-  if(page==="profile")renderProfile();
-  if(page==="settings")renderSettings();
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$("page-"+page).classList.remove("hidden");
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
+  $("sidebar").classList.remove("open");
+  if(page==="calculator")renderCalculator();if(page==="cards")renderCards();if(page==="goals")renderGoals();if(page==="investments")renderInvestments();if(page==="history")renderHistory();if(page==="reports")renderReports();if(page==="profile")renderProfile();if(page==="settings")renderSettings();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderCalculator(){
@@ -511,12 +484,7 @@ async function saveProfileAvatar(file){
 function recordHistory(){
   const b=calcBudget();const last=state.history[0]?.total||0;state.history.unshift({date:new Date().toLocaleDateString("pt-AO",{month:"long",year:"numeric"}),salary:b.salary,expenses:b.expenses,saving:b.saving,left:b.left,total:last+b.saving});save();renderHistory();
 }
-document.addEventListener("click",e=>{
-  const el=e.target.closest("[data-page]");
-  if(!el)return;
-  const p=el.dataset.page;
-  if(p){e.preventDefault();navigate(p);}
-});
+document.querySelectorAll(".nav-item,[data-page]").forEach(el=>el.addEventListener("click",e=>{const p=e.currentTarget.dataset.page;if(p)navigate(p)}));
 $("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
 const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento guardado!");};
 ["salary","fixed","variable","debt","saving"].forEach(id=>$(id).addEventListener("input",()=>{state.budget[id]=+$(id).value||0;save();renderDashboard()}));

@@ -1,45 +1,101 @@
-const fmt = n => new Intl.NumberFormat("pt-AO").format(Math.round(n));
-const $ = id => document.getElementById(id);
-
-function calculate(){
-  const salary=Number($("salary").value)||0;
-  const fixed=Number($("fixed").value)||0;
-  const variable=Number($("variable").value)||0;
-  const debt=Number($("debt").value)||0;
-  const saving=Number($("saving").value)||0;
-  const expenses=fixed+variable+debt;
-  const left=Math.max(0,salary-expenses-saving);
-  const savingPct=salary?Math.round(saving/salary*100):0;
-  $("salaryCard").textContent=fmt(salary)+" Kz";
-  $("expenseCard").textContent=fmt(expenses)+" Kz";
-  $("savingCard").textContent=fmt(saving)+" Kz";
-  $("leftCard").textContent=fmt(left)+" Kz";
-  $("donutTotal").textContent=fmt(salary);
-  $("legendLeft").textContent=fmt(left);
-  $("ring").textContent=savingPct+"%";
-  $("resultDetail").textContent=`Estás a poupar ${savingPct}% do teu salário.`;
-  $("resultText").textContent=savingPct>=20?"Estás no caminho certo! 👏":"Podes melhorar a tua poupança.";
-  const vals=[fixed,variable,saving,left];
-  vals.forEach((v,i)=>$("p"+(i+1)).textContent=salary?(v/salary*100).toFixed(1):"0");
-  const a=salary?fixed/salary*100:0,b=salary?variable/salary*100:a,c=salary?saving/salary*100:0;
-  $("donut").style.background=`conic-gradient(#3475df 0 ${a}%,#7747c9 ${a}% ${a+b}%,#39ad63 ${a+b}% ${a+b+c}%,#f2942e ${a+b+c}% 100%)`;
+const KEY="meucapital-v2";
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat("pt-AO").format(Math.round(Number(n)||0));
+const money=n=>fmt(n)+" "+(state.currency||"Kz");
+const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
+const defaults={
+  userName:"Letal",currency:"Kz",targetPct:20,
+  budget:{salary:400000,fixed:150000,variable:110000,debt:0,saving:80000},
+  goal:{name:"Minha meta",target:500000,saved:120000},
+  sim:{initial:100000,monthly:50000,rate:5,years:5},
+  investments:[],
+  history:[
+    {date:"Maio 2025",salary:400000,expenses:260000,saving:80000,left:60000,total:320000},
+    {date:"Abril 2025",salary:400000,expenses:255000,saving:75000,left:70000,total:240000},
+    {date:"Março 2025",salary:400000,expenses:250000,saving:80000,left:70000,total:165000}
+  ],
+  goals:[{name:"Minha meta",target:500000,saved:120000,monthly:40000}]
+};
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(defaults);
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function setVal(id,v){if($(id))$(id).value=v}
+function calcBudget(b=state.budget){
+  const salary=+b.salary||0,fixed=+b.fixed||0,variable=+b.variable||0,debt=+b.debt||0,saving=+b.saving||0;
+  const expenses=fixed+variable+debt,left=Math.max(0,salary-expenses-saving),pct=salary?saving/salary*100:0;
+  return {salary,fixed,variable,debt,saving,expenses,left,pct};
 }
-$("calculate").addEventListener("click",calculate);
-["salary","fixed","variable","debt","saving"].forEach(id=>$(id).addEventListener("input",calculate));
-
-function simulate(){
-  let principal=Number($("initial").value)||0, monthly=Number($("monthly").value)||0, rate=(Number($("rate").value)||0)/100;
-  const months=60, monthlyRate=rate/12;
-  const values=[];
-  let total=principal;
-  for(let m=0;m<=months;m++){
-    if(m>0) total=total*(1+monthlyRate)+monthly;
-    if(m%12===0) values.push(total);
-  }
-  $("future").textContent=fmt(values.at(-1))+" Kz";
-  const max=Math.max(...values);
-  $("bars").innerHTML=values.map((v,i)=>`<div class="bar" style="height:${Math.max(5,v/max*125)}px"><span>Ano ${i}</span></div>`).join("");
+function renderDashboard(){
+  const b=calcBudget(); $("salaryCard").textContent=money(b.salary);$("expenseCard").textContent=money(b.expenses);$("savingCard").textContent=money(b.saving);$("leftCard").textContent=money(b.left);
+  $("savedCard").textContent=money(state.history.length?Math.max(...state.history.map(x=>+x.total||0)):b.saving);
+  $("savingPctCard").textContent=b.pct.toFixed(0)+"% do salário";$("leftPctCard").textContent=(b.salary?b.left/b.salary*100:0).toFixed(0)+"% do salário";
+  ["salary","fixed","variable","debt","saving"].forEach(k=>setVal(k,b[k]));
+  $("donutTotal").textContent=fmt(b.salary);$("fixedLegend").textContent=fmt(b.fixed);$("variableLegend").textContent=fmt(b.variable);$("savingLegend").textContent=fmt(b.saving);$("legendLeft").textContent=fmt(b.left);
+  const ps=[b.fixed,b.variable,b.saving,b.left].map(v=>b.salary?v/b.salary*100:0);ps.forEach((p,i)=>$("p"+(i+1)).textContent=p.toFixed(1));
+  $("donut").style.background=`conic-gradient(#3475df 0 ${ps[0]}%,#7747c9 ${ps[0]}% ${ps[0]+ps[1]}%,#39ad63 ${ps[0]+ps[1]}% ${ps[0]+ps[1]+ps[2]}%,#f2942e ${ps[0]+ps[1]+ps[2]}% 100%)`;
+  $("ring").textContent=Math.round(b.pct)+"%";$("resultDetail").textContent=`Estás a poupar ${Math.round(b.pct)}% do teu salário.`;
+  $("resultText").textContent=b.pct>=state.targetPct?"Estás no caminho certo! 👏":"Podes melhorar a tua poupança.";
+  renderGoalMini();renderSim();
 }
-["initial","monthly","rate"].forEach(id=>$(id).addEventListener("input",simulate));
-$("menuBtn").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
-calculate(); simulate();
+function renderGoalMini(){
+  const g=state.goals[0]||state.goal; if(!g)return;
+  const pct=g.target?Math.min(100,g.saved/g.target*100):0,left=Math.max(0,g.target-g.saved),monthly=g.monthly||state.budget.saving||0,months=monthly?Math.ceil(left/monthly):0;
+  $("goalName").textContent=g.name;$("goalTarget").textContent=money(g.target);$("goalSaved").textContent=fmt(g.saved);$("goalMonthly").textContent=fmt(monthly);
+  $("goalPct").textContent=Math.round(pct)+"%";$("goalProgress").style.width=pct+"%";$("goalRemaining").textContent=left?`Faltam ${money(left)} para atingir a meta.`:"Meta atingida! 🎉";
+  $("goalMonths").textContent=months?months+" meses":"—";let d=new Date();d.setMonth(d.getMonth()+months);$("goalDate").textContent=months?d.toLocaleDateString("pt-AO",{month:"long",year:"numeric"}):"—";
+}
+function renderSim(){
+  const s=state.sim;["initial","monthly","rate","years"].forEach(k=>setVal(k,s[k]));
+  let total=+s.initial||0, mr=(+s.rate||0)/100/12, months=(+s.years||5)*12,values=[total];
+  for(let m=1;m<=months;m++){total=total*(1+mr)+(+s.monthly||0);if(m%12===0)values.push(total)}
+  $("future").textContent=money(total);$("futurePeriod").textContent=`em ${s.years} anos`;
+  const max=Math.max(...values,1);$("bars").innerHTML=values.map((v,i)=>`<div class="bar" style="height:${Math.max(8,v/max*125)}px"><span>Ano ${i}</span></div>`).join("");
+}
+function syncBudgetInputs(prefix=""){
+  const p=prefix;state.budget={salary:+$(p+"salary").value||0,fixed:+$(p+"fixed").value||0,variable:+$(p+"variable").value||0,debt:+$(p+"debt").value||0,saving:+$(p+"saving").value||0};save();renderDashboard();
+}
+function navigate(page){
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$("page-"+page).classList.remove("hidden");
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
+  $("sidebar").classList.remove("open");
+  if(page==="calculator")renderCalculator();if(page==="goals")renderGoals();if(page==="investments")renderInvestments();if(page==="history")renderHistory();if(page==="reports")renderReports();if(page==="settings")renderSettings();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderCalculator(){
+  const b=calcBudget();["Salary","Fixed","Variable","Debt","Saving"].forEach((k,i)=>setVal("calc"+k,[b.salary,b.fixed,b.variable,b.debt,b.saving][i]));
+  $("calcSummary").innerHTML=[["Despesas totais",b.expenses],["Poupança",b.saving],["Sobra",b.left]].map(x=>`<div class="report-card"><small>${x[0]}</small><strong>${money(x[1])}</strong></div>`).join("");
+}
+function renderGoals(){
+  $("goalsList").innerHTML=state.goals.map((g,i)=>{const p=g.target?Math.min(100,g.saved/g.target*100):0;return `<div class="item-card"><b>${g.name}</b><p><strong>${money(g.saved)}</strong> de ${money(g.target)} — ${p.toFixed(0)}%</p><div class="progress"><span style="width:${p}%"></span></div><div class="actions"><button class="secondary-btn" onclick="addGoalMoney(${i})">+ Adicionar poupança</button><button class="danger-btn" onclick="deleteGoal(${i})">Apagar</button></div></div>`}).join("");
+}
+function addGoalMoney(i){const amount=Number(prompt("Quanto queres adicionar?","10000"));if(!amount||amount<0)return;state.goals[i].saved+=amount;save();renderGoals();renderDashboard();toast("Poupança adicionada!")}
+function deleteGoal(i){if(!confirm("Apagar esta meta?"))return;state.goals.splice(i,1);save();renderGoals();renderDashboard()}
+function renderInvestments(){
+  $("investmentsList").innerHTML=state.investments.length?state.investments.map((x,i)=>`<div class="item-card"><b>${x.name}</b><p>Investido: <strong>${money(x.amount)}</strong> · Rendimento: ${x.rate}%/ano</p><button class="danger-btn" onclick="deleteInvestment(${i})">Apagar</button></div>`).join(""):"<p class='muted'>Ainda não tens investimentos registados.</p>";
+}
+function deleteInvestment(i){state.investments.splice(i,1);save();renderInvestments();toast("Investimento removido")}
+function renderHistory(){
+  $("historyBody").innerHTML=state.history.map(x=>`<tr><td>${x.date}</td><td>${fmt(x.salary)}</td><td>${fmt(x.expenses)}</td><td>${fmt(x.saving)}</td><td>${fmt(x.left)}</td><td>${fmt(x.total)}</td></tr>`).join("");
+}
+function renderReports(){
+  const b=calcBudget(), totalSaved=state.history.reduce((s,x)=>s+(+x.saving||0),0),avg=state.history.length?state.history.reduce((s,x)=>s+(+x.saving||0),0)/state.history.length:0;
+  $("reportGrid").innerHTML=[["Salário atual",money(b.salary)],["Poupança atual",money(b.saving)],["Média poupada",money(avg)],["Meses registados",state.history.length],["Investimentos",money(state.investments.reduce((s,x)=>s+(+x.amount||0),0))],["Total poupado nos registos",money(totalSaved)]].map(x=>`<div class="report-card"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join("");
+}
+function renderSettings(){setVal("userName",state.userName);setVal("targetPct",state.targetPct);setVal("currency",state.currency)}
+function recordHistory(){
+  const b=calcBudget();const last=state.history[0]?.total||0;state.history.unshift({date:new Date().toLocaleDateString("pt-AO",{month:"long",year:"numeric"}),salary:b.salary,expenses:b.expenses,saving:b.saving,left:b.left,total:last+b.saving});save();renderHistory();
+}
+document.querySelectorAll(".nav-item,[data-page]").forEach(el=>el.addEventListener("click",e=>{const p=e.currentTarget.dataset.page;if(p)navigate(p)}));
+$("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
+$("calculate").onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento guardado!");};
+["salary","fixed","variable","debt","saving"].forEach(id=>$(id).addEventListener("input",()=>{state.budget[id]=+$(id).value||0;save();renderDashboard()}));
+["initial","monthly","rate","years"].forEach(id=>$(id).addEventListener("input",()=>{state.sim[id]=+$(id).value||0;save();renderSim()}));
+$("calcSave").onclick=()=>{state.budget={salary:+$("calcSalary").value||0,fixed:+$("calcFixed").value||0,variable:+$("calcVariable").value||0,debt:+$("calcDebt").value||0,saving:+$("calcSaving").value||0};save();recordHistory();renderCalculator();renderDashboard();toast("Orçamento guardado!");};
+$("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name)return;const target=Number(prompt("Valor da meta em Kz","100000"));if(!target)return;state.goals.push({name,target,saved:0,monthly:state.budget.saving});save();renderGoals();toast("Meta criada!");};
+$("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
+$("saveSettings").onclick=()=>{state.userName=$("userName").value||"Letal";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`Olá, <b>${state.userName}</b> 👋`;renderDashboard();toast("Definições guardadas!")};
+$("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
+$("tipBtn").onclick=()=>alert("Uma boa regra inicial é guardar pelo menos 20% do rendimento. Ajusta a percentagem à tua realidade e mantém uma reserva para emergências.");
+$("ruleLink").onclick=e=>{e.preventDefault();alert("A regra 50/30/20 é uma referência: cerca de 50% para necessidades, 30% para desejos e 20% para poupança/investimento. Não é uma regra obrigatória.")};
+$("notifyBtn").onclick=()=>toast("Não tens novas notificações.");
+document.querySelector(".user").innerHTML=`Olá, <b>${state.userName}</b> 👋`;
+renderDashboard();renderHistory();

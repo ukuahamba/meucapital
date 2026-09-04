@@ -109,6 +109,7 @@
     <button class="nav-item" data-page="investments">↗ <span>Investimentos</span></button>
     <button class="nav-item" data-page="history">◷ <span>Histórico</span></button>
     <button class="nav-item" data-page="reports">▤ <span>Relatórios</span></button>
+    <button class="nav-item" data-page="profile">👤 <span>Meu Perfil</span></button>
     <button class="nav-item" data-page="settings">⚙ <span>Definições</span></button>
   </nav>
   <div class="tip" id="dica"><div class="tip-title">💡 Dica do Dia</div><b>Paga-te primeiro!</b><p>Poupa pelo menos 20% do que ganhas antes de gastar com outras coisas.</p><button class="green-btn" id="tipBtn">Saber mais</button></div>
@@ -192,6 +193,42 @@
 <section class="page hidden" id="page-history"><div class="page-head"><div><h1>◷ Histórico</h1><p>Registos guardados dos teus meses.</p></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Salário</th><th>Despesas</th><th>Poupança</th><th>Sobra</th><th>Total guardado</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
 
 <section class="page hidden" id="page-reports"><div class="page-head"><div><h1>📊 Relatórios</h1><p>Resumo rápido da tua evolução financeira.</p></div></div><div class="report-grid" id="reportGrid"></div></section>
+
+<section class="page hidden" id="page-profile">
+  <div class="page-head"><div><h1>👤 Meu Perfil</h1><p>Os dados da tua conta e informações do cliente.</p></div></div>
+  <div class="profile-grid">
+    <article class="panel profile-card">
+      <div class="profile-avatar" id="profileAvatar">U</div>
+      <div class="profile-main">
+        <span class="profile-label">Cliente</span>
+        <h2 id="profileName">Utilizador</h2>
+        <p id="profileEmail" class="muted">—</p>
+        <span class="status-badge" id="profileStatus">Conta ativa</span>
+      </div>
+    </article>
+    <article class="panel">
+      <h2>Dados da conta</h2>
+      <div class="info-list">
+        <div><span>Nome completo</span><strong id="profileFullName">—</strong></div>
+        <div><span>E-mail</span><strong id="profileEmailDetail">—</strong></div>
+        <div><span>Conta criada em</span><strong id="profileCreatedAt">—</strong></div>
+        <div><span>E-mail confirmado em</span><strong id="profileConfirmedAt">—</strong></div>
+      </div>
+    </article>
+  </div>
+  <div class="grid-2">
+    <article class="panel">
+      <h2>Dados pessoais</h2><p class="muted">Atualiza o nome que aparece no teu painel.</p>
+      <div class="big-form single-form"><div><label for="profileEditName">Nome completo</label><input id="profileEditName" type="text" autocomplete="name" placeholder="O teu nome"></div></div>
+      <button class="calculate" id="saveProfile">Guardar dados</button>
+    </article>
+    <article class="panel">
+      <h2>Segurança</h2><p class="muted">Mantém a tua conta protegida.</p>
+      <button class="secondary-btn full-btn" id="profileChangePassword">Alterar palavra-passe</button>
+      <button class="danger-btn full-btn" id="profileLogout">Terminar sessão</button>
+    </article>
+  </div>
+</section>
 
 <section class="page hidden" id="page-settings"><div class="page-head"><div><h1>⚙️ Definições</h1><p>Personaliza o teu MeuCapital.</p></div></div><div class="panel"><div class="big-form"><div><label>Nome</label><input id="userName"></div><div><label>Meta de poupança (%)</label><input id="targetPct" type="number" min="0" max="100"></div><div><label>Moeda</label><select id="currency"><option>Kz</option><option>USD</option><option>EUR</option></select></div></div><button class="calculate" id="saveSettings">Guardar definições</button><button class="danger-btn" id="resetData">Apagar dados deste dispositivo</button></div></section>
 

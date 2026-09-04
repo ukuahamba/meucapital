@@ -34,7 +34,7 @@ const showApp=(user)=>{
   save();
   const userEl=document.querySelector(".user");
   if(userEl) userEl.innerHTML=`Olá, <b>${escapeHtml(state.userName)}</b> 👋`;
-  renderDashboard(); renderHistory();
+  renderDashboard(); renderHistory(); renderProfile();
 };
 const showAuth=()=>{
   currentUser=null;
@@ -267,7 +267,7 @@ function navigate(page){
   document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$("page-"+page).classList.remove("hidden");
   document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
   $("sidebar").classList.remove("open");
-  if(page==="calculator")renderCalculator();if(page==="goals")renderGoals();if(page==="investments")renderInvestments();if(page==="history")renderHistory();if(page==="reports")renderReports();if(page==="settings")renderSettings();
+  if(page==="calculator")renderCalculator();if(page==="goals")renderGoals();if(page==="investments")renderInvestments();if(page==="history")renderHistory();if(page==="reports")renderReports();if(page==="profile")renderProfile();if(page==="settings")renderSettings();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderCalculator(){
@@ -291,6 +291,34 @@ function renderReports(){
   $("reportGrid").innerHTML=[["Salário atual",money(b.salary)],["Poupança atual",money(b.saving)],["Média poupada",money(avg)],["Meses registados",state.history.length],["Investimentos",money(state.investments.reduce((s,x)=>s+(+x.amount||0),0))],["Total poupado nos registos",money(totalSaved)]].map(x=>`<div class="report-card"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join("");
 }
 function renderSettings(){setVal("userName",state.userName);setVal("targetPct",state.targetPct);setVal("currency",state.currency)}
+function formatDateTime(value){
+  if(!value)return "—";
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return "—";
+  return d.toLocaleDateString("pt-AO",{day:"2-digit",month:"long",year:"numeric"});
+}
+function getUserDisplayName(){
+  return (currentUser?.user_metadata?.full_name||state.userName||currentUser?.email?.split("@")[0]||"Utilizador").trim();
+}
+function initials(name){
+  const parts=String(name||"U").trim().split(/\s+/).filter(Boolean);
+  return (parts.slice(0,2).map(x=>x[0]).join("")||"U").toUpperCase();
+}
+function renderProfile(){
+  const name=getUserDisplayName();
+  const email=currentUser?.email||"—";
+  $("profileAvatar").textContent=initials(name);
+  $("profileName").textContent=name;
+  $("profileEmail").textContent=email;
+  $("profileFullName").textContent=name;
+  $("profileEmailDetail").textContent=email;
+  $("profileCreatedAt").textContent=formatDateTime(currentUser?.created_at);
+  $("profileConfirmedAt").textContent=formatDateTime(currentUser?.email_confirmed_at);
+  $("profileStatus").textContent=currentUser?.email_confirmed_at?"✓ E-mail confirmado":"E-mail por confirmar";
+  $("profileStatus").classList.toggle("pending",!currentUser?.email_confirmed_at);
+  $("profileEditName").value=name;
+}
+
 function recordHistory(){
   const b=calcBudget();const last=state.history[0]?.total||0;state.history.unshift({date:new Date().toLocaleDateString("pt-AO",{month:"long",year:"numeric"}),salary:b.salary,expenses:b.expenses,saving:b.saving,left:b.left,total:last+b.saving});save();renderHistory();
 }
@@ -304,6 +332,17 @@ $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
 $("saveSettings").onclick=()=>{state.userName=$("userName").value||"Letal";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`Olá, <b>${state.userName}</b> 👋`;renderDashboard();toast("Definições guardadas!")};
 $("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
+$("saveProfile").onclick=async()=>{
+  const name=$("profileEditName").value.trim();
+  if(!name){toast("Introduz o teu nome.");return;}
+  const {data,error}=await supabaseClient.auth.updateUser({data:{full_name:name}});
+  if(error){toast(error.message||"Não foi possível guardar os dados.");return;}
+  state.userName=name;save();currentUser=data.user||currentUser;
+  document.querySelector(".user").innerHTML=`Olá, <b>${escapeHtml(name)}</b> 👋`;
+  renderProfile();renderSettings();toast("Dados do cliente atualizados! ✓");
+};
+$("profileChangePassword").onclick=()=>openPasswordRecovery();
+$("profileLogout").onclick=()=>$("logoutBtn").click();
 $("tipBtn").onclick=()=>alert("Uma boa regra inicial é guardar pelo menos 20% do rendimento. Ajusta a percentagem à tua realidade e mantém uma reserva para emergências.");
 $("ruleLink").onclick=e=>{e.preventDefault();alert("A regra 50/30/20 é uma referência: cerca de 50% para necessidades, 30% para desejos e 20% para poupança/investimento. Não é uma regra obrigatória.")};
 $("notifyBtn").onclick=()=>toast("Não tens novas notificações.");

@@ -21,3 +21,6 @@ Nunca colocar uma Secret/Service Role key no frontend.
 
 
 V6: confirmação de criação de conta por código OTP de 6 dígitos. No Supabase, o template "Confirm signup" deve usar {{ .Token }} para enviar o código.
+
+
+V7: corrigida a recuperação de palavra-passe para não usar hash personalizado no redirect, preservando o token de sessão do Supabase.

@@ -139,7 +139,7 @@ $("resetForm").addEventListener("submit",async(e)=>{
   setAuthMessage("A enviar o e-mail de recuperação...");
   const email=$("resetEmail").value.trim();
   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
-    redirectTo:window.location.href.split("#")[0]+"#reset-password"
+    redirectTo:window.location.href.split("#")[0]+"?reset-password=1"
   });
   if(error) setAuthMessage(error.message||"Não foi possível enviar o e-mail.",true);
   else setAuthMessage("E-mail enviado. Abre-o e segue o link para definir uma nova palavra-passe.");
@@ -165,7 +165,8 @@ $("logoutBtn").onclick=async()=>{
 };
 
 const handlePasswordRecovery=()=>{
-  if(window.location.hash.includes("reset-password")){
+  const isRecovery=new URLSearchParams(window.location.search).get("reset-password")==="1";
+  if(isRecovery){
     $("passwordUpdateModal").classList.remove("hidden");
   }
 };

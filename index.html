@@ -7,7 +7,7 @@
   <meta name="description" content="MeuCapital: planeia hoje, vive melhor amanhã. Organiza orçamento, poupança, metas e investimentos.">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#08111c">
-  <link rel="canonical" href="https://ukuhamba.github.io/meucapital/">
+  <link rel="canonical" href="https://ukuahamba.github.io/meucapital/">
   <link rel="stylesheet" href="style.css">
 
   <link rel="icon" type="image/png" sizes="512x512" href="favicon.png">
@@ -49,6 +49,18 @@
         <button class="calculate auth-submit" type="submit">Criar conta</button>
       </form>
       <button class="auth-link" id="backToLoginFromSignup">Já tens conta? Entrar</button>
+    </div>
+
+    <div id="authOtpView" class="hidden">
+      <h1>Confirma o teu e-mail</h1>
+      <p class="auth-subtitle">Enviámos um código de 6 dígitos para <b id="otpEmailLabel"></b>.</p>
+      <form id="otpForm" class="auth-form">
+        <label for="signupOtp">Código de confirmação</label>
+        <input id="signupOtp" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+        <button class="calculate auth-submit" type="submit">Confirmar e-mail</button>
+      </form>
+      <button class="auth-link" id="resendOtp">Reenviar código</button>
+      <button class="auth-link muted-link" id="backToLoginFromOtp">Voltar ao login</button>
     </div>
 
     <div id="authResetView" class="hidden">
@@ -187,5 +199,14 @@
 </main></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.addEventListener("error", function(e){
+  if (e.target && e.target.tagName === "SCRIPT" && e.target.src && e.target.src.includes("cdn.jsdelivr.net")) {
+    const msg=document.getElementById("authMessage");
+    if(msg){msg.textContent="Não foi possível carregar o serviço de autenticação. Atualiza a página e tenta novamente.";msg.classList.add("error");}
+  }
+}, true);
+</script>
+
 <script src="script.js"></script>
 </body></html>

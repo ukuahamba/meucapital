@@ -2,6 +2,9 @@ const SUPABASE_URL="https://ozwyxcuhhujnhymwqgjb.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_vGMyphDHDA6K1ZoI3anfhQ_rKnM_SzM";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let currentUser=null;
+let pendingSignupEmail="";
+let pendingSignupPassword="";
+let pendingSignupName="";
 let KEY="meucapital-v5";
 const $=id=>document.getElementById(id);
 const fmt=n=>new Intl.NumberFormat("pt-AO").format(Math.round(Number(n)||0));
@@ -17,7 +20,7 @@ const setAuthMessage=(msg,error=false)=>{
   authMessage.classList.toggle("error",!!error);
 };
 const authView=(view)=>{
-  ["authLoginView","authSignupView","authResetView"].forEach(id=>$(id).classList.add("hidden"));
+  ["authLoginView","authSignupView","authOtpView","authResetView"].forEach(id=>$(id).classList.add("hidden"));
   $(view).classList.remove("hidden");
   setAuthMessage("");
 };
@@ -91,11 +94,45 @@ $("signupForm").addEventListener("submit",async(e)=>{
   if(error){ setAuthMessage(error.message||"Não foi possível criar a conta.",true); return; }
   if(data.session){
     setAuthMessage("Conta criada. A entrar...");
+    return;
+  }
+  pendingSignupEmail=email;
+  pendingSignupPassword=password;
+  pendingSignupName=name;
+  $("otpEmailLabel").textContent=email;
+  $("signupOtp").value="";
+  authView("authOtpView");
+  setAuthMessage("Código enviado. Verifica o teu e-mail.");
+});
+
+$("otpForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const token=$("signupOtp").value.trim().replace(/\D/g,"");
+  if(!pendingSignupEmail || token.length!==6){setAuthMessage("Introduz o código de 6 dígitos.",true);return;}
+  setAuthMessage("A confirmar o código...");
+  const {data,error}=await supabaseClient.auth.verifyOtp({email:pendingSignupEmail,token,type:"email"});
+  if(error){setAuthMessage(error.message||"Código inválido ou expirado.",true);return;}
+  if(data.session){
+    const user=data.session.user;
+    setAccountStorage(user);
+    if(pendingSignupName && (!state.userName || state.userName==="Letal")){state.userName=pendingSignupName;save();}
+    pendingSignupEmail="";pendingSignupPassword="";pendingSignupName="";
+    showApp(user);
   } else {
-    setAuthMessage("Conta criada! Verifica o teu e-mail antes de entrares.");
-    $("signupForm").reset();
+    setAuthMessage("E-mail confirmado. Já podes entrar com a tua palavra-passe.");
+    authView("authLoginView");
   }
 });
+
+$("resendOtp").onclick=async()=>{
+  if(!pendingSignupEmail){authView("authSignupView");return;}
+  setAuthMessage("A reenviar o código...");
+  const {error}=await supabaseClient.auth.resend({type:"signup",email:pendingSignupEmail,options:{emailRedirectTo:window.location.href.split("#")[0]}});
+  if(error)setAuthMessage(error.message||"Não foi possível reenviar o código.",true);
+  else setAuthMessage("Novo código enviado. Verifica o teu e-mail.");
+};
+
+$("backToLoginFromOtp").onclick=()=>authView("authLoginView");
 
 $("resetForm").addEventListener("submit",async(e)=>{
   e.preventDefault();
@@ -134,7 +171,6 @@ const handlePasswordRecovery=()=>{
 };
 window.addEventListener("hashchange",handlePasswordRecovery);
 handlePasswordRecovery();
-bootAuth();
 
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
 const defaults={
@@ -233,3 +269,6 @@ $("ruleLink").onclick=e=>{e.preventDefault();alert("A regra 50/30/20 é uma refe
 $("notifyBtn").onclick=()=>toast("Não tens novas notificações.");
 document.querySelector(".user").innerHTML=`Olá, <b>${state.userName}</b> 👋`;
 renderDashboard();renderHistory();
+
+// Start authentication only after the app state/defaults are initialized.
+bootAuth();

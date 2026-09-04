@@ -1,17 +1,23 @@
-# MeuCapital V5 — Autenticação
+# MeuCapital V5 — Login (corrigido)
 
-Esta versão integra o frontend do MeuCapital com o Supabase Auth.
+Versão corrigida do MeuCapital com Supabase Auth.
 
 Inclui:
-- Criar conta com nome, e-mail e palavra-passe
+- Criar conta
 - Login
 - Confirmação de e-mail
 - Recuperação de palavra-passe
 - Logout
 - Sessão persistente
 - Dados locais separados por utilizador neste dispositivo
-- Favicon e imagem de apresentação mantidos
+- Favicon e apresentação
 
-Próxima etapa: criar as tabelas do MeuCapital no Supabase e ativar RLS para sincronizar receitas, despesas, metas, investimentos e histórico na nuvem.
+Correção principal:
+- A autenticação agora é inicializada depois de o estado e os dados padrão do MeuCapital estarem carregados, evitando erro de JavaScript na abertura do site.
 
-Importante: a Publishable key pode ser usada no frontend. Nunca colocar uma Secret/Service Role key no site.
+Próxima etapa: configurar as URLs de autenticação no Supabase e depois criar as tabelas/RLS para sincronizar os dados na nuvem.
+
+Nunca colocar uma Secret/Service Role key no frontend.
+
+
+V6: confirmação de criação de conta por código OTP de 6 dígitos. No Supabase, o template "Confirm signup" deve usar {{ .Token }} para enviar o código.

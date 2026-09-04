@@ -142,6 +142,33 @@
     <article class="stat cyan"><span>CAPITAL ACUMULADO</span><strong id="savedCard">0 Kz</strong></article>
   </section>
 
+  <section class="executive-grid" aria-label="Indicadores financeiros">
+    <article class="panel health-panel">
+      <div class="panel-kicker">SAÚDE FINANCEIRA</div>
+      <div class="health-main"><div class="health-score" id="healthScore">0</div><div><h2 id="healthTitle">Começa por registar o teu mês</h2><p id="healthText" class="muted">Preenche o teu rendimento e despesas para obteres uma leitura financeira personalizada.</p></div></div>
+      <div class="health-meter"><span id="healthMeter"></span></div>
+      <div class="health-meta"><span>Poupança <b id="healthSaving">0%</b></span><span>Despesas <b id="healthExpense">0%</b></span><span>Meta <b id="healthGoal">0%</b></span></div>
+    </article>
+    <article class="panel capital-panel">
+      <div class="panel-kicker">POSIÇÃO ATUAL</div>
+      <div class="capital-value" id="capitalPosition">0 Kz</div>
+      <p class="muted">Capital acompanhado no MeuCapital</p>
+      <div class="capital-breakdown"><div><span>Poupança registada</span><b id="capitalSaved">0 Kz</b></div><div><span>Investimentos</span><b id="capitalInvested">0 Kz</b></div></div>
+    </article>
+  </section>
+
+  <section class="grid-2 executive-lower">
+    <article class="panel">
+      <div class="section-heading"><div><div class="panel-kicker">EVOLUÇÃO</div><h2>Fluxo financeiro</h2><p class="muted">Comparação dos últimos registos guardados.</p></div><span class="trend-badge" id="trendBadge">Sem dados</span></div>
+      <div class="flow-chart" id="flowChart"><div class="empty-state">Ainda não existem registos mensais suficientes.</div></div>
+      <div class="chart-legend"><span><i class="legend-income"></i>Rendimento</span><span><i class="legend-expense"></i>Despesas</span><span><i class="legend-saving"></i>Poupança</span></div>
+    </article>
+    <article class="panel">
+      <div class="section-heading"><div><div class="panel-kicker">ACOMPANHAMENTO</div><h2>Prioridades financeiras</h2><p class="muted">O que merece atenção neste momento.</p></div></div>
+      <div class="priority-list" id="priorityList"></div>
+    </article>
+  </section>
+
   <section class="grid-2">
     <article class="panel">
       <h2>Planeamento mensal</h2><p class="muted">Define como o teu rendimento será distribuído.</p>

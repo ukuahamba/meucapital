@@ -216,16 +216,12 @@ $("logoutBtn").onclick=async()=>{
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
 const defaults={
   userName:"Utilizador",currency:"Kz",targetPct:20,
-  budget:{salary:400000,fixed:150000,variable:110000,debt:0,saving:80000},
-  goal:{name:"Minha meta",target:500000,saved:120000},
-  sim:{initial:100000,monthly:50000,rate:5,years:5},
+  budget:{salary:0,fixed:0,variable:0,debt:0,saving:0},
+  goal:{name:"",target:0,saved:0},
+  sim:{initial:0,monthly:0,rate:5,years:5},
   investments:[],
-  history:[
-    {date:"Maio 2025",salary:400000,expenses:260000,saving:80000,left:60000,total:320000},
-    {date:"Abril 2025",salary:400000,expenses:255000,saving:75000,left:70000,total:240000},
-    {date:"Março 2025",salary:400000,expenses:250000,saving:80000,left:70000,total:165000}
-  ],
-  goals:[{name:"Minha meta",target:500000,saved:120000,monthly:40000}]
+  history:[],
+  goals:[]
 };
 let state=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(defaults);
 function save(){if(currentUser) localStorage.setItem(KEY,JSON.stringify(state))}
@@ -245,8 +241,48 @@ function renderDashboard(){
   $("donut").style.background=`conic-gradient(#3475df 0 ${ps[0]}%,#7747c9 ${ps[0]}% ${ps[0]+ps[1]}%,#39ad63 ${ps[0]+ps[1]}% ${ps[0]+ps[1]+ps[2]}%,#f2942e ${ps[0]+ps[1]+ps[2]}% 100%)`;
   $("ring").textContent=Math.round(b.pct)+"%";$("resultDetail").textContent=`Estás a poupar ${Math.round(b.pct)}% do teu salário.`;
   $("resultText").textContent=b.pct>=state.targetPct?"Estás no caminho certo! 👏":"Podes melhorar a tua poupança.";
-  renderGoalMini();renderSim();
+  renderGoalMini();renderSim();renderProfessionalDashboard();
 }
+function renderProfessionalDashboard(){
+  const b=calcBudget();
+  const invested=state.investments.reduce((sum,x)=>sum+(+x.amount||0),0);
+  const savedHistory=state.history.reduce((sum,x)=>sum+(+x.saving||0),0);
+  const goal=state.goals[0]||null;
+  const goalPct=goal?.target?Math.min(100,(+goal.saved||0)/(+goal.target||1)*100):0;
+  const savingPct=b.salary?b.saving/b.salary*100:0;
+  const expensePct=b.salary?b.expenses/b.salary*100:0;
+  const score=b.salary?Math.max(0,Math.min(100,Math.round(savingPct*1.8 + Math.max(0,100-expensePct)*.35 - (b.debt/b.salary*100)*.35))):0;
+  $("healthScore").textContent=score; $("healthMeter").style.width=score+"%";
+  $("healthSaving").textContent=savingPct.toFixed(0)+"%"; $("healthExpense").textContent=expensePct.toFixed(0)+"%"; $("healthGoal").textContent=goalPct.toFixed(0)+"%";
+  const title=score>=75?"Boa disciplina financeira":score>=50?"Situação equilibrada":b.salary?"Há espaço para melhorar":"Começa por registar o teu mês";
+  const text=score>=75?"A tua distribuição de rendimento mostra uma boa margem de controlo.":score>=50?"Mantém o controlo das despesas e protege a tua poupança.":b.salary?"Reveja despesas e aumenta gradualmente a margem de poupança.":"Preenche o teu rendimento e despesas para obteres uma leitura financeira personalizada.";
+  $("healthTitle").textContent=title; $("healthText").textContent=text;
+  const position=Math.max(0,savedHistory)+invested;
+  $("capitalPosition").textContent=money(position); $("capitalSaved").textContent=money(savedHistory); $("capitalInvested").textContent=money(invested);
+
+  const history=[...state.history].slice(0,6).reverse();
+  const chart=$("flowChart");
+  if(!history.length){chart.innerHTML='<div class="empty-state">Guarda o primeiro orçamento mensal para começar a acompanhar a evolução.</div>';}
+  else {
+    const max=Math.max(...history.flatMap(x=>[+x.salary||0,+x.expenses||0,+x.saving||0]),1);
+    chart.innerHTML=history.map((x)=>{const a=(+x.salary||0)/max*100,e=(+x.expenses||0)/max*100,sv=(+x.saving||0)/max*100;return `<div class="flow-col"><div class="flow-bars"><span class="flow-bar income" style="height:${Math.max(3,a)}%" title="Rendimento ${money(x.salary)}"></span><span class="flow-bar expense" style="height:${Math.max(3,e)}%" title="Despesas ${money(x.expenses)}"></span><span class="flow-bar saving" style="height:${Math.max(3,sv)}%" title="Poupança ${money(x.saving)}"></span></div><small>${escapeHtml(String(x.date||"Mês").replace(/ de /g," "))}</small></div>`}).join('');
+  }
+  const latest=state.history[0], previous=state.history[1];
+  const trend=latest&&previous?((+latest.saving||0)-(+previous.saving||0)):(latest?(+latest.saving||0):0);
+  $("trendBadge").textContent=latest?(trend>=0?"↑ Poupança em alta":"↓ Poupança em baixa"):"Sem dados";
+  $("trendBadge").className="trend-badge "+(trend>=0&&latest?"positive":"negative");
+
+  const priorities=[];
+  if(!b.salary) priorities.push(["01","Registar rendimento","Define o teu rendimento mensal para ativar os indicadores.","calculator"]);
+  if(b.salary && savingPct<state.targetPct) priorities.push(["02","Aumentar a poupança",`Estás em ${savingPct.toFixed(0)}% e a tua meta é ${state.targetPct}%.`,"calculator"]);
+  if(b.salary && b.expenses>b.salary*.7) priorities.push(["03","Rever despesas","As despesas ocupam uma parte elevada do rendimento.","calculator"]);
+  if(!goal) priorities.push(["04","Criar uma meta","Define um objetivo concreto para dar direção ao teu capital.","goals"]);
+  if(!invested) priorities.push(["05","Registar investimentos","Acompanha o capital que já está a trabalhar por ti.","investments"]);
+  if(!priorities.length) priorities.push(["✓","Manter consistência","Os teus principais indicadores estão equilibrados. Continua a acompanhar o mês.","reports"]);
+  $("priorityList").innerHTML=priorities.slice(0,4).map(x=>`<button class="priority-item" data-page="${x[3]}"><span class="priority-num">${x[0]}</span><span><b>${x[1]}</b><small>${x[2]}</small></span><strong>›</strong></button>`).join('');
+  $("priorityList").querySelectorAll("[data-page]").forEach(el=>el.onclick=()=>navigate(el.dataset.page));
+}
+
 function renderGoalMini(){
   const g=state.goals[0]||state.goal; if(!g)return;
   const pct=g.target?Math.min(100,g.saved/g.target*100):0,left=Math.max(0,g.target-g.saved),monthly=g.monthly||state.budget.saving||0,months=monthly?Math.ceil(left/monthly):0;

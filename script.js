@@ -38,6 +38,7 @@ const showApp=(user)=>{
   const greetEl=$("dashboardGreeting");
   if(greetEl) greetEl.textContent=`Bem-vindo, ${state.userName}. Aqui tens uma visão clara do teu capital e do teu mês.`;
   renderDashboard(); renderHistory(); renderProfile();
+  void syncWalletFromCloud(user);
 };
 const showAuth=()=>{
   currentUser=null;
@@ -269,6 +270,91 @@ const defaults={
 };
 let state=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(defaults);
 function save(){if(currentUser) localStorage.setItem(KEY,JSON.stringify(state))}
+
+function setCloudStatus(text,kind="idle"){
+  const el=$("cloudSyncStatus");
+  if(!el)return;
+  el.textContent=text;
+  el.dataset.state=kind;
+}
+
+let cloudSyncInFlight=false;
+async function syncWalletFromCloud(user=currentUser){
+  if(!user || cloudSyncInFlight)return;
+  cloudSyncInFlight=true;
+  setCloudStatus("A sincronizar com a tua conta…","syncing");
+  try{
+    const [{data:cards,error:cardsError},{data:txs,error:txError}]=await Promise.all([
+      supabaseClient.from("wallet_cards").select("id,name,issuer,last4,type,created_at").eq("user_id",user.id).order("created_at",{ascending:false}),
+      supabaseClient.from("wallet_transactions").select("id,description,amount,type,category,occurred_at,card_id,created_at").eq("user_id",user.id).order("occurred_at",{ascending:false}).order("created_at",{ascending:false})
+    ]);
+    if(cardsError)throw cardsError;
+    if(txError)throw txError;
+
+    const localCards=Array.isArray(state.cards)?state.cards:[];
+    const localTx=Array.isArray(state.transactions)?state.transactions:[];
+
+    if((cards||[]).length===0 && localCards.length){
+      const payload=localCards.map(c=>({user_id:user.id,name:c.name,issuer:c.issuer||null,last4:c.last4,type:c.type||"Débito"}));
+      const {data:inserted,error}=await supabaseClient.from("wallet_cards").insert(payload).select("id,name,issuer,last4,type,created_at");
+      if(error)throw error;
+      state.cards=(inserted||[]).map(c=>({...c}));
+    }else{
+      state.cards=(cards||[]).map(c=>({...c}));
+    }
+
+    if((txs||[]).length===0 && localTx.length){
+      const payload=localTx.map(t=>({
+        user_id:user.id,description:t.desc||"Movimento",amount:Number(t.amount)||0,type:t.type||"Despesa",
+        category:t.category||"Outro",occurred_at:t.isoDate||new Date().toISOString().slice(0,10),card_id:t.card_id||null
+      }));
+      const {data:inserted,error}=await supabaseClient.from("wallet_transactions").insert(payload).select("id,description,amount,type,category,occurred_at,card_id,created_at");
+      if(error)throw error;
+      state.transactions=(inserted||[]).map(t=>({...t,desc:t.description,date:new Date(t.occurred_at+"T00:00:00").toLocaleDateString("pt-AO")}));
+    }else{
+      state.transactions=(txs||[]).map(t=>({...t,desc:t.description,date:new Date(t.occurred_at+"T00:00:00").toLocaleDateString("pt-AO")}));
+    }
+    save();
+    renderCards();
+    renderDashboard();
+    renderProfile();
+    setCloudStatus("Sincronizado com a tua conta ✓","ok");
+  }catch(err){
+    console.error("MeuCapital wallet sync:",err);
+    setCloudStatus("Sincronização indisponível — os dados locais continuam disponíveis.","error");
+  }finally{cloudSyncInFlight=false;}
+}
+
+async function addCardToCloud(card){
+  if(!currentUser)return null;
+  const {data,error}=await supabaseClient.from("wallet_cards").insert({
+    user_id:currentUser.id,name:card.name,issuer:card.issuer||null,last4:card.last4,type:card.type||"Débito"
+  }).select("id,name,issuer,last4,type,created_at").single();
+  if(error)throw error;
+  return data;
+}
+
+async function addTransactionToCloud(tx){
+  if(!currentUser)return null;
+  const {data,error}=await supabaseClient.from("wallet_transactions").insert({
+    user_id:currentUser.id,description:tx.desc,amount:Number(tx.amount),type:tx.type,category:tx.category,
+    occurred_at:tx.isoDate,card_id:tx.card_id||null
+  }).select("id,description,amount,type,category,occurred_at,card_id,created_at").single();
+  if(error)throw error;
+  return data;
+}
+
+async function deleteCardFromCloud(id){
+  if(!currentUser || !id)return;
+  const {error}=await supabaseClient.from("wallet_cards").delete().eq("id",id).eq("user_id",currentUser.id);
+  if(error)throw error;
+}
+
+async function deleteTransactionFromCloud(id){
+  if(!currentUser || !id)return;
+  const {error}=await supabaseClient.from("wallet_transactions").delete().eq("id",id).eq("user_id",currentUser.id);
+  if(error)throw error;
+}
 function setVal(id,v){if($(id))$(id).value=v}
 function calcBudget(b=state.budget){
   const salary=+b.salary||0,fixed=+b.fixed||0,variable=+b.variable||0,debt=+b.debt||0,saving=+b.saving||0;
@@ -347,10 +433,21 @@ function syncBudgetInputs(prefix=""){
 function renderCards(){
   const cards=state.cards||[], tx=state.transactions||[];
   $("cardsList").innerHTML=cards.length?cards.map((c,i)=>`<div class="item-card wallet-card"><div class="wallet-card-main"><div class="wallet-mini-card"><span>MC</span><b>•••• ${escapeHtml(c.last4)}</b></div><div><b>${escapeHtml(c.name)}</b><p>${escapeHtml(c.issuer||"Emissor não indicado")} · ${escapeHtml(c.type)}</p></div></div><button class="danger-btn" onclick="deleteCard(${i})">Remover</button></div>`).join(""):"<div class='empty-state'>Ainda não tens cartões registados.</div>";
-  $("transactionsList").innerHTML=tx.length?tx.slice(0,12).map((t,i)=>`<div class="item-card transaction-card"><div><b>${escapeHtml(t.desc)}</b><p>${escapeHtml(t.category)} · ${escapeHtml(t.date)}</p></div><strong class="${t.type==='Entrada'?'tx-in':'tx-out'}">${t.type==='Entrada'?'+':'-'}${money(t.amount)}</strong><button class="danger-btn" onclick="deleteTransaction(${i})">×</button></div>`).join(""):"<div class='empty-state'>Ainda não existem movimentos.</div>";
+  $("transactionsList").innerHTML=tx.length?tx.slice(0,12).map((t,i)=>`<div class="item-card transaction-card"><div><b>${escapeHtml(t.desc||t.description)}</b><p>${escapeHtml(t.category||"Outro")} · ${escapeHtml(t.date||t.occurred_at||"")}</p></div><strong class="${t.type==='Entrada'?'tx-in':'tx-out'}">${t.type==='Entrada'?'+':'-'}${money(t.amount)}</strong><button class="danger-btn" onclick="deleteTransaction(${i})">×</button></div>`).join(""):"<div class='empty-state'>Ainda não existem movimentos.</div>";
 }
-function deleteCard(i){if(!confirm("Remover este cartão do MeuCapital?"))return;state.cards.splice(i,1);save();renderCards();toast("Cartão removido.")}
-function deleteTransaction(i){state.transactions.splice(i,1);save();renderCards();toast("Movimento removido.")}
+async function deleteCard(i){
+  if(!confirm("Remover este cartão do MeuCapital?"))return;
+  const card=state.cards[i];
+  state.cards.splice(i,1); save(); renderCards();
+  try{await deleteCardFromCloud(card?.id);setCloudStatus("Cartão removido e sincronizado ✓","ok");toast("Cartão removido.");}
+  catch(err){console.error(err);toast("Foi removido no ecrã, mas não foi possível sincronizar.");setCloudStatus("Erro de sincronização","error");}
+}
+async function deleteTransaction(i){
+  const tx=state.transactions[i];
+  state.transactions.splice(i,1); save(); renderCards(); renderDashboard();
+  try{await deleteTransactionFromCloud(tx?.id);setCloudStatus("Movimento removido e sincronizado ✓","ok");toast("Movimento removido.");}
+  catch(err){console.error(err);toast("Foi removido no ecrã, mas não foi possível sincronizar.");setCloudStatus("Erro de sincronização","error");}
+}
 function navigate(page){
   const target=$("page-"+page);
   if(!target)return;
@@ -494,6 +591,25 @@ async function saveProfileAvatar(file){
 function recordHistory(){
   const b=calcBudget();const last=state.history[0]?.total||0;state.history.unshift({date:new Date().toLocaleDateString("pt-AO",{month:"long",year:"numeric"}),salary:b.salary,expenses:b.expenses,saving:b.saving,left:b.left,total:last+b.saving});save();renderHistory();
 }
+// Reconhecimento local do banco pelo BIN (não guardamos o BIN).
+const ANGOLA_BIN_BANKS={
+  "401839":"BPC","402533":"BNI","402842":"BAI","403195":"BNI","403209":"Banco Económico","403267":"BAI","403640":"Banco Económico","403938":"BNI","404904":"Banco Sol","405827":"BAI","406183":"BIC","406184":"BIC","408174":"Banco Económico","408390":"Banco Comercial Angolano","408391":"Banco Comercial Angolano","410227":"BAI","410228":"BAI","410318":"BAI","412575":"BCGA","412660":"Standard Bank Angola","413727":"BNI","415157":"BFA","417045":"BAI","417066":"BAI","417981":"Banco Económico","417983":"Banco Económico","417984":"Banco Económico","417985":"Banco Económico","418888":"Banco Valor","422036":"BAI","424128":"BAI","424129":"BAI","424130":"BPC","424590":"Millennium Atlântico","424591":"Millennium Atlântico","424592":"Millennium Atlântico","428457":"Banco Comercial do Huambo","428480":"Banco Comercial do Huambo","431824":"Standard Bank Angola","437578":"BNI","439951":"Access Bank Angola","439952":"Access Bank Angola","443840":"BPC","443841":"BPC","443842":"BPC","443843":"BPC","443844":"BPC","443963":"BFA","444467":"Millennium Angola","446150":"BIC","446384":"Banco Sol","446385":"BCGA","446577":"Banco Sol","446907":"Banco Keve","446908":"Banco Keve","446909":"Millennium Angola","447353":"BCGA","447354":"BCGA","447842":"Banco Sol","447843":"Banco Sol","447886":"BNI","447887":"BNI","447888":"BNI","455666":"Finibanco Angola","455668":"BCGA","457260":"BPC","457286":"Millennium Atlântico","457287":"Millennium Atlântico","457313":"Millennium Angola","457397":"BFA","457398":"BFA","457797":"BPC","457853":"Standard Bank Angola","458286":"BFA","458287":"BFA","462119":"BAI","465962":"BFA","471224":"BCGA","471330":"BNI","471421":"BIC","472297":"BIC","472298":"BIC","472299":"BIC","472907":"Banco Sol","475160":"Banco Económico","475178":"BPC","475179":"Millennium Atlântico","476711":"BAI","476716":"BAI","476829":"Standard Bank Angola","479329":"Access Bank Angola","481687":"BAI","484636":"BCGA","484898":"BFA","511212":"BAI","511745":"Banco de Crédito do Sul","513252":"Banco Sol","514946":"BAI","516307":"BCI","518102":"Banco Sol","518297":"BAI","519516":"Banco de Investimento Rural","520022":"BNI","520226":"Banco de Investimento Rural","520230":"Banco Valor","524622":"BCI","524725":"Banco Yetu","526486":"Banco de Crédito do Sul","526767":"Banco de Investimento Rural","529238":"Banco Sol","529521":"Banco de Crédito do Sul","529592":"Banco Valor","530634":"Banco Sol","530819":"BNI","532052":"Banco Sol","533780":"Banco Sol","534197":"BNI","534642":"Banco Sol","534650":"Banco Valor","536096":"Banco Angolano de Negócios e Comércio","537698":"BCI","538012":"Banco de Crédito do Sul","538138":"Banco Valor","539790":"Banco Sol","539809":"Banco Sol","539815":"Banco Sol","539839":"Banco Sol","540988":"Banco Sol","541342":"Banco Sol","541397":"Banco Sol","545897":"BNI","550071":"Banco Sol","551397":"Banco Sol","553522":"Banco Sol","555647":"Banco Yetu","555879":"BCI","556679":"BNI","557662":"BNI","604613":"Millennium Atlântico","623384":"UnionPay","623385":"UnionPay","626276":"UnionPay","626423":"UnionPay","629226":"UnionPay","629287":"UnionPay"
+};
+function detectCardBank(bin){
+  const key=String(bin||"").replace(/\D/g,"").slice(0,6);
+  return ANGOLA_BIN_BANKS[key]||"";
+}
+function updateCardBank(){
+  const bin=$("cardBin")?.value.replace(/\D/g,"").slice(0,6)||"";
+  if($("cardBin")) $("cardBin").value=bin;
+  const bank=detectCardBank(bin);
+  if($("cardIssuer")) $("cardIssuer").value=bank;
+  if($("cardBankStatus")){
+    $("cardBankStatus").textContent=bank?`Banco reconhecido automaticamente: ${bank} ✓`:(bin.length===6?"BIN não encontrado na base local. Verifica os dígitos.":"O banco será reconhecido automaticamente.");
+    $("cardBankStatus").dataset.state=bank?"ok":(bin.length===6?"error":"idle");
+  }
+}
+
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-page]");
   if(!el)return;
@@ -507,8 +623,40 @@ const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onc
 $("calcSave").onclick=()=>{state.budget={salary:+$("calcSalary").value||0,fixed:+$("calcFixed").value||0,variable:+$("calcVariable").value||0,debt:+$("calcDebt").value||0,saving:+$("calcSaving").value||0};save();recordHistory();renderCalculator();renderDashboard();toast("Orçamento guardado!");};
 $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name)return;const target=Number(prompt("Valor da meta em Kz","100000"));if(!target)return;state.goals.push({name,target,saved:0,monthly:state.budget.saving});save();renderGoals();toast("Meta criada!");};
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
-$("addCard").onclick=()=>{const name=$("cardName").value.trim(),issuer=$("cardIssuer").value.trim(),last4=$("cardLast4").value.trim(),type=$("cardType").value;if(!name||!/^[0-9]{4}$/.test(last4)){toast("Indica o nome e exatamente os últimos 4 dígitos.");return;}state.cards=state.cards||[];state.cards.unshift({name,issuer,last4,type});save();$("cardName").value="";$("cardIssuer").value="";$("cardLast4").value="";renderCards();toast("Cartão adicionado com segurança.")};
-$("addTransaction").onclick=()=>{const desc=$("txDesc").value.trim(),amount=+$("txAmount").value||0,type=$("txType").value,category=$("txCategory").value;if(!desc||amount<=0){toast("Indica a descrição e um valor válido.");return;}state.transactions=state.transactions||[];state.transactions.unshift({desc,amount,type,category,date:new Date().toLocaleDateString("pt-AO")});save();$("txDesc").value="";$("txAmount").value="";renderCards();toast("Movimento registado.")};
+$("cardBin")?.addEventListener("input",updateCardBank);
+$("addCard").onclick=async()=>{
+  const btn=$("addCard"),name=$("cardName").value.trim(),bin=$("cardBin").value.trim(),issuer=detectCardBank(bin),last4=$("cardLast4").value.trim(),type=$("cardType").value;
+  if(!name||!/^[0-9]{6}$/.test(bin)||!issuer||!/^[0-9]{4}$/.test(last4)){toast("Indica o nome, um BIN angolano válido e os últimos 4 dígitos.");return;}
+  buttonBusy(btn,true,"A guardar…");
+  const card={name,issuer,last4,type};
+  try{
+    const saved=await addCardToCloud(card);
+    state.cards=state.cards||[]; state.cards.unshift(saved||card); save(); renderCards();
+    $("cardName").value="";$("cardBin").value="";$("cardIssuer").value="";$("cardLast4").value=""; updateCardBank();
+    setCloudStatus("Cartão sincronizado com a tua conta ✓","ok");toast(`${issuer} reconhecido e cartão adicionado com segurança.`);
+  }catch(err){
+    console.error(err);
+    state.cards=state.cards||[];state.cards.unshift(card);save();renderCards();
+    setCloudStatus("Não foi possível sincronizar o cartão.","error");toast("Cartão guardado localmente. Verifica a configuração da base de dados.");
+  }finally{buttonBusy(btn,false);}
+};
+$("addTransaction").onclick=async()=>{
+  const btn=$("addTransaction"),desc=$("txDesc").value.trim(),amount=+$ ("txAmount").value||0,type=$("txType").value,category=$("txCategory").value;
+  if(!desc||amount<=0){toast("Indica a descrição e um valor válido.");return;}
+  buttonBusy(btn,true,"A guardar…");
+  const now=new Date(); const tx={desc,amount,type,category,date:now.toLocaleDateString("pt-AO"),isoDate:now.toISOString().slice(0,10)};
+  try{
+    const saved=await addTransactionToCloud(tx);
+    const normalized=saved?{...saved,desc:saved.description,date:new Date(saved.occurred_at+"T00:00:00").toLocaleDateString("pt-AO")} : tx;
+    state.transactions=state.transactions||[];state.transactions.unshift(normalized);save();renderCards();renderDashboard();
+    $("txDesc").value="";$("txAmount").value="";
+    setCloudStatus("Movimento sincronizado com a tua conta ✓","ok");toast("Movimento registado.");
+  }catch(err){
+    console.error(err);
+    state.transactions=state.transactions||[];state.transactions.unshift(tx);save();renderCards();renderDashboard();
+    setCloudStatus("Não foi possível sincronizar o movimento.","error");toast("Movimento guardado localmente. Verifica a configuração da base de dados.");
+  }finally{buttonBusy(btn,false);}
+};
 $("saveSettings").onclick=()=>{state.userName=$("userName").value.trim()||"Utilizador";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;renderDashboard();toast("Definições guardadas!")};
 $("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
 $("topAvatar").onclick=()=>navigate("profile");

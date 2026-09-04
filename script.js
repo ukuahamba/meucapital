@@ -2,6 +2,7 @@ const SUPABASE_URL="https://ozwyxcuhhujnhymwqgjb.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_vGMyphDHDA6K1ZoI3anfhQ_rKnM_SzM";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let currentUser=null;
+let authBootFinished=false;
 let pendingSignupEmail="";
 let pendingSignupPassword="";
 let pendingSignupName="";
@@ -77,12 +78,16 @@ const setAccountStorage=(user)=>{
   if(user.user_metadata?.full_name && (!state.userName || state.userName==="Letal" || state.userName==="Utilizador")) state.userName=user.user_metadata.full_name;
 };
 const bootAuth=async()=>{
+  // Evita uma corrida entre a inicialização da sessão e um login clicado pelo utilizador.
+  // Sem isto, o getSession() inicial pode devolver null depois do signIn e voltar a mostrar
+  // a tela de login por cima da aplicação, obrigando a atualizar a página.
   await handlePasswordRecovery();
   const {data:{session}}=await supabaseClient.auth.getSession();
+  authBootFinished=true;
   if(session){
     setAccountStorage(session.user);
     showApp(session.user);
-  } else {
+  } else if(!currentUser){
     showAuth();
   }
 };
@@ -108,6 +113,8 @@ $("loginForm").addEventListener("submit",async(e)=>{
     }
     // Entra imediatamente com a sessão devolvida pelo Supabase, sem exigir atualização da página.
     if(data?.session){
+      // A sessão devolvida pelo signIn é suficiente: entra na conta imediatamente.
+      // Não dependemos de refresh nem do getSession() inicial.
       setAccountStorage(data.session.user);
       showApp(data.session.user);
       return;

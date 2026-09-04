@@ -94,23 +94,31 @@
   </div>
 </div>
 
-<header class="topbar">
-  <button class="menu-btn" id="menuBtn" aria-label="Abrir menu"><span></span><span></span><span></span></button>
-  <div class="brand"><div class="logo">Meu<span>Capital</span></div><div class="tagline">Planeia hoje, vive melhor amanhã.</div></div>
-  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações"><span class="notification-dot"></span>⌁</button><button class="top-avatar" id="topAvatar" aria-label="Abrir meu perfil"><span class="top-avatar-initials">U</span></button><div class="user"><span class="user-greeting">Olá,</span> <b>Utilizador</b></div><button class="logout-btn" id="logoutBtn">Terminar sessão</button></div>
+<header class="topbar mc17-topbar">
+  <div class="topbar-left">
+    <button class="menu-btn" id="menuBtn" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+    <div class="brand"><div class="logo">Meu<span>Capital</span></div><div class="tagline">Planeia hoje, vive melhor amanhã.</div></div>
+  </div>
+  <div class="top-search"><span>⌕</span><input aria-label="Pesquisar" placeholder="Pesquisar no MeuCapital…"></div>
+  <div class="top-actions">
+    <button class="icon-btn mc17-icon-btn" id="notifyBtn" aria-label="Notificações"><span class="bell-symbol">♧</span><span class="notification-count">3</span></button>
+    <button class="top-avatar" id="topAvatar" aria-label="Abrir meu perfil"><span class="top-avatar-initials">U</span></button>
+    <div class="user"><span class="user-greeting">Olá,</span> <b>Utilizador</b></div>
+    <button class="logout-btn" id="logoutBtn">Terminar sessão</button>
+  </div>
 </header>
 
 <div class="layout">
 <aside class="sidebar" id="sidebar">
   <nav>
-    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">01</span><span>Resumo</span></button>
-    <button class="nav-item" data-page="calculator"><span class="nav-icon">02</span><span>Planeamento</span></button>
-    <button class="nav-item" data-page="goals"><span class="nav-icon">03</span><span>Metas</span></button>
-    <button class="nav-item" data-page="investments"><span class="nav-icon">04</span><span>Investimentos</span></button>
-    <button class="nav-item" data-page="history"><span class="nav-icon">05</span><span>Histórico</span></button>
-    <button class="nav-item" data-page="reports"><span class="nav-icon">06</span><span>Relatórios</span></button>
-    <button class="nav-item" data-page="profile"><span class="nav-icon">07</span><span>Meu Perfil</span></button>
-    <button class="nav-item" data-page="settings"><span class="nav-icon">08</span><span>Definições</span></button>
+    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Início</span></button>
+    <button class="nav-item" data-page="calculator"><span class="nav-icon">▦</span><span>Planeamento</span></button>
+    <button class="nav-item" data-page="goals"><span class="nav-icon">◎</span><span>Metas</span></button>
+    <button class="nav-item" data-page="investments"><span class="nav-icon">↗</span><span>Investimentos</span></button>
+    <button class="nav-item" data-page="history"><span class="nav-icon">◷</span><span>Histórico</span></button>
+    <button class="nav-item" data-page="reports"><span class="nav-icon">▤</span><span>Relatórios</span></button>
+    <button class="nav-item" data-page="profile"><span class="nav-icon">◉</span><span>Meu Perfil</span></button>
+    <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span><span>Definições</span></button>
   </nav>
   <div class="tip" id="dica"><div class="tip-title">INSIGHT FINANCEIRO</div><b>Paga-te primeiro.</b><p>Define a tua poupança antes de distribuir o restante rendimento.</p><button class="green-btn" id="tipBtn">Ver recomendação</button></div>
 </aside>
@@ -119,26 +127,61 @@
 <section class="page" id="page-dashboard">
   <div class="page-head"><div><span class="eyebrow">ÁREA DO CLIENTE</span><h1>Visão geral financeira</h1><p id="dashboardGreeting">Acompanha o teu capital, orçamento e objetivos num só lugar.</p></div><select id="monthSelect" aria-label="Selecionar mês"></select></div>
   
-  <section class="hero-presentation" aria-label="Apresentação do MeuCapital">
-    <div class="hero-copy">
-      <span class="hero-badge">MEUCAPITAL · PRIVATE FINANCE</span>
-      <h2>Mais controlo. <span>Mais capital.</span></h2>
-      <p>Planeia com clareza. Protege o que construíste. Faz cada kwanza trabalhar a favor dos teus próximos objetivos — com uma visão simples, privada e profissional.</p>
-      <div class="hero-actions">
-        <button class="calculate" data-page="calculator">Abrir planeamento</button>
-        <button class="secondary-btn" data-page="goals">Consultar metas</button>
+  <section class="mc17-dashboard" aria-label="Painel financeiro principal">
+    <div class="mc17-welcome-row">
+      <div class="mc17-welcome">
+        <span class="eyebrow">MEUCAPITAL · PRIVATE FINANCE</span>
+        <h2>Olá, <span id="mc17Name">Utilizador</span> <span class="wave">👋</span></h2>
+        <p>Aqui está o resumo da tua vida financeira. Mantém o controlo e continua a construir capital.</p>
+      </div>
+      <aside class="mc17-notifications" id="mc17Notifications" aria-label="Notificações recentes">
+        <div class="mc17-notifications-head"><span class="mc17-bell">●</span><strong>Notificações</strong><b id="mc17NotifCount">3</b><button type="button" class="mc17-close-notif" id="mc17CloseNotif" aria-label="Fechar notificações">×</button></div>
+        <button type="button" class="mc17-notification-item"><i class="ok"></i><span><b>Meta atingiu 70%</b><small>Há 2 horas</small></span></button>
+        <button type="button" class="mc17-notification-item"><i class="ok"></i><span><b>Rendimento registado</b><small>Há 4 horas</small></span></button>
+        <button type="button" class="mc17-notification-item"><i class="warn"></i><span><b>Despesa registada</b><small>Há 6 horas</small></span></button>
+        <button type="button" class="mc17-see-all" id="mc17SeeNotifications">Ver todas <span>→</span></button>
+      </aside>
+    </div>
+
+    <div class="mc17-balance-card">
+      <div class="mc17-balance-main">
+        <div class="mc17-wallet-icon">▰</div>
+        <div><span>Meu saldo disponível</span><strong id="mc17Balance">0 Kz</strong><small id="mc17BalanceTrend">↑ 0% este mês</small></div>
+      </div>
+      <div class="mc17-bank-card" aria-label="Cartão MeuCapital">
+        <div class="mc17-card-top"><b>Meu<span>Capital</span></b><span>◉</span></div>
+        <div class="mc17-chip"></div><div class="mc17-contactless">)))</div>
+        <div class="mc17-card-number">•••• 4587</div>
       </div>
     </div>
-    <div class="hero-image-wrap">
-      <img src="meucapital-apresentacao.png" alt="Apresentação do dashboard MeuCapital em computador e telemóvel" loading="eager">
+
+    <div class="mc17-quick-actions">
+      <button type="button" data-mc17-action="transfer"><span class="qa-icon green">↗</span><b>Transferir</b><small>Dinheiro</small></button>
+      <button type="button" data-mc17-action="deposit"><span class="qa-icon blue">+</span><b>Depositar</b><small>Dinheiro</small></button>
+      <button type="button" data-mc17-action="card"><span class="qa-icon purple">▭</span><b>Cartões</b><small>Gerir cartões</small></button>
+      <button type="button" data-mc17-action="more"><span class="qa-icon slate">•••</span><b>Mais</b><small>Serviços</small></button>
     </div>
+
+    <section class="mc17-overview panel">
+      <div class="mc17-section-head"><div><span class="panel-kicker">VISÃO GERAL</span><h2>Resumo financeiro</h2><p class="muted">Acompanha o que entrou, saiu e foi construído.</p></div><div class="mc17-period">Este mês <span>⌄</span></div></div>
+      <div class="mc17-metrics">
+        <article><span class="metric-icon income">↗</span><small>Receitas</small><strong id="mc17Income">0 Kz</strong><b>+12% ↗</b></article>
+        <article><span class="metric-icon expense">▣</span><small>Despesas</small><strong id="mc17Expense">0 Kz</strong><b class="negative">+5% ↗</b></article>
+        <article><span class="metric-icon saving">✦</span><small>Poupança</small><strong id="mc17Saving">0 Kz</strong><b>+20% ↗</b></article>
+        <article><span class="metric-icon invest">▥</span><small>Investimentos</small><strong id="mc17Invest">0 Kz</strong><b>+18% ↗</b></article>
+      </div>
+      <div class="mc17-lower-grid">
+        <div class="mc17-chart-card"><div class="mc17-subhead"><div><h3>Evolução do saldo</h3><small>Últimos 6 meses</small></div><strong id="mc17ChartValue">0 Kz</strong></div><div class="mc17-spark" id="mc17Spark"><span></span></div><div class="mc17-axis"><span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span></div></div>
+        <div class="mc17-goals-card"><div class="mc17-subhead"><div><h3>Metas</h3><small>Objetivos em acompanhamento</small></div><button type="button" data-page="goals">Ver todas →</button></div><div id="mc17GoalsMini"></div></div>
+      </div>
+      <div class="mc17-invest-row"><div><span class="metric-icon invest">▥</span><div><h3>Investimentos</h3><small>Capital registado</small></div></div><strong id="mc17InvestTotal">0 Kz</strong><button type="button" data-page="investments">Ver investimentos →</button></div>
+    </section>
   </section>
 
-  <div class="hero-proof" aria-label="Princípios do MeuCapital">
-    <div><strong>01</strong><span>Clareza</span><small>Sabe onde está cada kwanza.</small></div>
-    <div><strong>02</strong><span>Estratégia</span><small>Decide antes de gastar.</small></div>
-    <div><strong>03</strong><span>Crescimento</span><small>Transforma disciplina em capital.</small></div>
-  </div>
+  <section class="mc17-brand-strip" aria-label="Posicionamento MeuCapital">
+    <div><span class="hero-badge">MEUCAPITAL · PRIVATE FINANCE</span><h2>Mais controlo. <span>Mais capital.</span></h2><p>Planeia com clareza, acompanha o teu património e toma decisões melhores.</p></div>
+    <div class="brand-strip-points"><span><b>01</b> Clareza</span><span><b>02</b> Estratégia</span><span><b>03</b> Crescimento</span></div>
+  </section>
 
   <section class="cards">
     <article class="stat green"><span>RENDIMENTO MENSAL</span><strong id="salaryCard">0 Kz</strong></article>
@@ -296,4 +339,12 @@ window.addEventListener("error", function(e){
 </script>
 
 <script src="script.js"></script>
+
+<nav class="mc17-bottom-nav" aria-label="Navegação principal móvel">
+  <button class="active" data-page="dashboard"><span>⌂</span><small>Início</small></button>
+  <button data-page="calculator"><span>▦</span><small>Planeamento</small></button>
+  <button data-page="goals"><span>◎</span><small>Metas</small></button>
+  <button data-page="investments"><span>↗</span><small>Investir</small></button>
+  <button data-page="profile"><span>◉</span><small>Perfil</small></button>
+</nav>
 </body></html>

@@ -352,10 +352,20 @@ function renderCards(){
 function deleteCard(i){if(!confirm("Remover este cartão do MeuCapital?"))return;state.cards.splice(i,1);save();renderCards();toast("Cartão removido.")}
 function deleteTransaction(i){state.transactions.splice(i,1);save();renderCards();toast("Movimento removido.")}
 function navigate(page){
-  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$("page-"+page).classList.remove("hidden");
-  document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
-  $("sidebar").classList.remove("open");
-  if(page==="calculator")renderCalculator();if(page==="cards")renderCards();if(page==="goals")renderGoals();if(page==="investments")renderInvestments();if(page==="history")renderHistory();if(page==="reports")renderReports();if(page==="profile")renderProfile();if(page==="settings")renderSettings();
+  const target=$("page-"+page);
+  if(!target)return;
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+  target.classList.remove("hidden");
+  document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
+  $("sidebar")?.classList.remove("open");
+  if(page==="calculator")renderCalculator();
+  if(page==="cards")renderCards();
+  if(page==="goals")renderGoals();
+  if(page==="investments")renderInvestments();
+  if(page==="history")renderHistory();
+  if(page==="reports")renderReports();
+  if(page==="profile")renderProfile();
+  if(page==="settings")renderSettings();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderCalculator(){
@@ -484,7 +494,12 @@ async function saveProfileAvatar(file){
 function recordHistory(){
   const b=calcBudget();const last=state.history[0]?.total||0;state.history.unshift({date:new Date().toLocaleDateString("pt-AO",{month:"long",year:"numeric"}),salary:b.salary,expenses:b.expenses,saving:b.saving,left:b.left,total:last+b.saving});save();renderHistory();
 }
-document.querySelectorAll(".nav-item,[data-page]").forEach(el=>el.addEventListener("click",e=>{const p=e.currentTarget.dataset.page;if(p)navigate(p)}));
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-page]");
+  if(!el)return;
+  const p=el.dataset.page;
+  if(p){e.preventDefault();navigate(p);}
+});
 $("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
 const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento guardado!");};
 ["salary","fixed","variable","debt","saving"].forEach(id=>$(id).addEventListener("input",()=>{state.budget[id]=+$(id).value||0;save();renderDashboard()}));

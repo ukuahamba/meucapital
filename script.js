@@ -30,10 +30,12 @@ const showApp=(user)=>{
   authScreen.classList.add("hidden");
   const email=user?.email||"";
   const suggested=(user?.user_metadata?.full_name||email.split("@")[0]||"Utilizador").trim();
-  if(!state || !state.userName || state.userName==="Letal") state.userName=suggested;
+  if(!state || !state.userName || state.userName==="Letal" || state.userName==="Utilizador") state.userName=suggested;
   save();
   const userEl=document.querySelector(".user");
-  if(userEl) userEl.innerHTML=`Olá, <b>${escapeHtml(state.userName)}</b> 👋`;
+  if(userEl) userEl.innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;
+  const greetEl=$("dashboardGreeting");
+  if(greetEl) greetEl.textContent=`Bem-vindo, ${state.userName}. Aqui tens uma visão clara do teu capital e do teu mês.`;
   renderDashboard(); renderHistory(); renderProfile();
 };
 const showAuth=()=>{
@@ -47,7 +49,7 @@ const setAccountStorage=(user)=>{
   KEY=`meucapital-v5:${user.id}`;
   const raw=localStorage.getItem(KEY);
   state=raw?JSON.parse(raw):structuredClone(defaults);
-  if(user.user_metadata?.full_name && (!state.userName || state.userName==="Letal")) state.userName=user.user_metadata.full_name;
+  if(user.user_metadata?.full_name && (!state.userName || state.userName==="Letal" || state.userName==="Utilizador")) state.userName=user.user_metadata.full_name;
 };
 const bootAuth=async()=>{
   await handlePasswordRecovery();
@@ -108,7 +110,7 @@ $("otpForm").addEventListener("submit",async(e)=>{
   if(data.session){
     const user=data.session.user;
     setAccountStorage(user);
-    if(pendingSignupName && (!state.userName || state.userName==="Letal")){state.userName=pendingSignupName;save();}
+    if(pendingSignupName && (!state.userName || state.userName==="Letal" || state.userName==="Utilizador")){state.userName=pendingSignupName;save();}
     pendingSignupEmail="";pendingSignupPassword="";pendingSignupName="";
     showApp(user);
   } else {
@@ -207,14 +209,13 @@ window.addEventListener("hashchange",()=>{void handlePasswordRecovery();});
 
 $("logoutBtn").onclick=async()=>{
   await supabaseClient.auth.signOut();
-  localStorage.removeItem(KEY);
   setAuthMessage("");
   authView("authLoginView");
 };
 
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
 const defaults={
-  userName:"Letal",currency:"Kz",targetPct:20,
+  userName:"Utilizador",currency:"Kz",targetPct:20,
   budget:{salary:400000,fixed:150000,variable:110000,debt:0,saving:80000},
   goal:{name:"Minha meta",target:500000,saved:120000},
   sim:{initial:100000,monthly:50000,rate:5,years:5},
@@ -330,7 +331,7 @@ $("calculate").onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento
 $("calcSave").onclick=()=>{state.budget={salary:+$("calcSalary").value||0,fixed:+$("calcFixed").value||0,variable:+$("calcVariable").value||0,debt:+$("calcDebt").value||0,saving:+$("calcSaving").value||0};save();recordHistory();renderCalculator();renderDashboard();toast("Orçamento guardado!");};
 $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name)return;const target=Number(prompt("Valor da meta em Kz","100000"));if(!target)return;state.goals.push({name,target,saved:0,monthly:state.budget.saving});save();renderGoals();toast("Meta criada!");};
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
-$("saveSettings").onclick=()=>{state.userName=$("userName").value||"Letal";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`Olá, <b>${state.userName}</b> 👋`;renderDashboard();toast("Definições guardadas!")};
+$("saveSettings").onclick=()=>{state.userName=$("userName").value.trim()||"Utilizador";state.targetPct=+$("targetPct").value||20;state.currency=$("currency").value||"Kz";save();document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;renderDashboard();toast("Definições guardadas!")};
 $("resetData").onclick=()=>{if(!confirm("Isto apaga os dados guardados neste dispositivo. Continuar?"))return;state=structuredClone(defaults);save();renderDashboard();toast("Dados repostos.")};
 $("saveProfile").onclick=async()=>{
   const name=$("profileEditName").value.trim();
@@ -338,7 +339,7 @@ $("saveProfile").onclick=async()=>{
   const {data,error}=await supabaseClient.auth.updateUser({data:{full_name:name}});
   if(error){toast(error.message||"Não foi possível guardar os dados.");return;}
   state.userName=name;save();currentUser=data.user||currentUser;
-  document.querySelector(".user").innerHTML=`Olá, <b>${escapeHtml(name)}</b> 👋`;
+  document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(name)}</b>`;
   renderProfile();renderSettings();toast("Dados do cliente atualizados! ✓");
 };
 $("profileChangePassword").onclick=()=>openPasswordRecovery();
@@ -346,7 +347,7 @@ $("profileLogout").onclick=()=>$("logoutBtn").click();
 $("tipBtn").onclick=()=>alert("Uma boa regra inicial é guardar pelo menos 20% do rendimento. Ajusta a percentagem à tua realidade e mantém uma reserva para emergências.");
 $("ruleLink").onclick=e=>{e.preventDefault();alert("A regra 50/30/20 é uma referência: cerca de 50% para necessidades, 30% para desejos e 20% para poupança/investimento. Não é uma regra obrigatória.")};
 $("notifyBtn").onclick=()=>toast("Não tens novas notificações.");
-document.querySelector(".user").innerHTML=`Olá, <b>${state.userName}</b> 👋`;
+document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;
 renderDashboard();renderHistory();
 
 // Start authentication only after the app state/defaults are initialized.

@@ -95,38 +95,38 @@
 </div>
 
 <header class="topbar">
-  <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+  <button class="menu-btn" id="menuBtn" aria-label="Abrir menu"><span></span><span></span><span></span></button>
   <div class="brand"><div class="logo">Meu<span>Capital</span></div><div class="tagline">Planeia hoje, vive melhor amanhã.</div></div>
-  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações">♧</button><div class="user">Olá, <b>Letal</b> 👋</div><button class="logout-btn" id="logoutBtn">Sair</button></div>
+  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações"><span class="notification-dot"></span>⌁</button><div class="user"><span class="user-greeting">Olá,</span> <b>Utilizador</b></div><button class="logout-btn" id="logoutBtn">Terminar sessão</button></div>
 </header>
 
 <div class="layout">
 <aside class="sidebar" id="sidebar">
   <nav>
-    <button class="nav-item active" data-page="dashboard">⌂ <span>Resumo</span></button>
-    <button class="nav-item" data-page="calculator">▣ <span>Calculadora</span></button>
-    <button class="nav-item" data-page="goals">◎ <span>Metas</span></button>
-    <button class="nav-item" data-page="investments">↗ <span>Investimentos</span></button>
-    <button class="nav-item" data-page="history">◷ <span>Histórico</span></button>
-    <button class="nav-item" data-page="reports">▤ <span>Relatórios</span></button>
-    <button class="nav-item" data-page="profile">👤 <span>Meu Perfil</span></button>
-    <button class="nav-item" data-page="settings">⚙ <span>Definições</span></button>
+    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">01</span><span>Resumo</span></button>
+    <button class="nav-item" data-page="calculator"><span class="nav-icon">02</span><span>Planeamento</span></button>
+    <button class="nav-item" data-page="goals"><span class="nav-icon">03</span><span>Metas</span></button>
+    <button class="nav-item" data-page="investments"><span class="nav-icon">04</span><span>Investimentos</span></button>
+    <button class="nav-item" data-page="history"><span class="nav-icon">05</span><span>Histórico</span></button>
+    <button class="nav-item" data-page="reports"><span class="nav-icon">06</span><span>Relatórios</span></button>
+    <button class="nav-item" data-page="profile"><span class="nav-icon">07</span><span>Meu Perfil</span></button>
+    <button class="nav-item" data-page="settings"><span class="nav-icon">08</span><span>Definições</span></button>
   </nav>
-  <div class="tip" id="dica"><div class="tip-title">💡 Dica do Dia</div><b>Paga-te primeiro!</b><p>Poupa pelo menos 20% do que ganhas antes de gastar com outras coisas.</p><button class="green-btn" id="tipBtn">Saber mais</button></div>
+  <div class="tip" id="dica"><div class="tip-title">INSIGHT FINANCEIRO</div><b>Paga-te primeiro.</b><p>Define a tua poupança antes de distribuir o restante rendimento.</p><button class="green-btn" id="tipBtn">Ver recomendação</button></div>
 </aside>
 
 <main class="content">
 <section class="page" id="page-dashboard">
-  <div class="page-head"><div><h1>📈 Painel Principal</h1><p>Visão geral das tuas finanças</p></div><select id="monthSelect" aria-label="Selecionar mês"></select></div>
+  <div class="page-head"><div><span class="eyebrow">ÁREA DO CLIENTE</span><h1>Visão geral financeira</h1><p id="dashboardGreeting">Acompanha o teu capital, orçamento e objetivos num só lugar.</p></div><select id="monthSelect" aria-label="Selecionar mês"></select></div>
   
   <section class="hero-presentation" aria-label="Apresentação do MeuCapital">
     <div class="hero-copy">
-      <span class="hero-badge">MEUCAPITAL</span>
-      <h2>O teu dinheiro, <span>a tua liberdade.</span></h2>
-      <p>Planeia hoje, vive melhor amanhã. Organiza o teu orçamento, acompanha as tuas metas e toma decisões financeiras com mais confiança.</p>
+      <span class="hero-badge">MEUCAPITAL · PRIVATE FINANCE</span>
+      <h2>Mais controlo. <span>Mais capital.</span></h2>
+      <p>Uma visão clara do teu dinheiro para tomares decisões com confiança. Planeia o mês, acompanha o património e constrói objetivos de longo prazo.</p>
       <div class="hero-actions">
-        <button class="calculate" data-page="calculator">Começar a planear</button>
-        <button class="secondary-btn" data-page="goals">Ver as minhas metas</button>
+        <button class="calculate" data-page="calculator">Abrir planeamento</button>
+        <button class="secondary-btn" data-page="goals">Consultar metas</button>
       </div>
     </div>
     <div class="hero-image-wrap">
@@ -135,16 +135,16 @@
   </section>
 
   <section class="cards">
-    <article class="stat green"><span>💼 Salário Mensal</span><strong id="salaryCard">0 Kz</strong></article>
-    <article class="stat blue"><span>↓ Total de Despesas</span><strong id="expenseCard">0 Kz</strong></article>
-    <article class="stat purple"><span>🐷 Poupança Mensal</span><strong id="savingCard">0 Kz</strong><small id="savingPctCard">0% do salário</small></article>
-    <article class="stat orange"><span>🪙 Sobra Mensal</span><strong id="leftCard">0 Kz</strong><small id="leftPctCard">0% do salário</small></article>
-    <article class="stat cyan"><span>▣ Total Guardado</span><strong id="savedCard">0 Kz</strong></article>
+    <article class="stat green"><span>RENDIMENTO MENSAL</span><strong id="salaryCard">0 Kz</strong></article>
+    <article class="stat blue"><span>DESPESAS TOTAIS</span><strong id="expenseCard">0 Kz</strong></article>
+    <article class="stat purple"><span>POUPANÇA MENSAL</span><strong id="savingCard">0 Kz</strong><small id="savingPctCard">0% do salário</small></article>
+    <article class="stat orange"><span>CAPITAL DISPONÍVEL</span><strong id="leftCard">0 Kz</strong><small id="leftPctCard">0% do salário</small></article>
+    <article class="stat cyan"><span>CAPITAL ACUMULADO</span><strong id="savedCard">0 Kz</strong></article>
   </section>
 
   <section class="grid-2">
     <article class="panel">
-      <h2>Calculadora Mensal</h2><p class="muted">Insere os teus valores</p>
+      <h2>Planeamento mensal</h2><p class="muted">Define como o teu rendimento será distribuído.</p>
       <div class="form-row"><label for="salary">Salário / Rendimento mensal</label><input id="salary" type="number" min="0" step="1000"><span>Kz</span></div>
       <div class="form-row"><label for="fixed">Despesas Fixas</label><input id="fixed" type="number" min="0" step="1000"><span>Kz</span></div>
       <div class="form-row"><label for="variable">Despesas Variáveis</label><input id="variable" type="number" min="0" step="1000"><span>Kz</span></div>
@@ -154,7 +154,7 @@
       <div class="result"><div><b>Resultado</b><h3 id="resultText">—</h3><p id="resultDetail">—</p></div><div class="ring" id="ring">0%</div></div>
     </article>
     <article class="panel">
-      <h2>Distribuição do Salário</h2><p class="muted">Como o teu dinheiro está a ser usado</p>
+      <h2>Alocação do rendimento</h2><p class="muted">Uma leitura simples de onde o teu dinheiro está a ir.</p>
       <div class="donut-wrap"><div class="donut" id="donut"><div><b id="donutTotal">0</b><br>Kz</div></div>
       <div class="legend">
         <p><i class="dot d1"></i><b>Despesas Fixas</b><br><span id="fixedLegend">0</span> Kz (<span id="p1">0</span>%)</p>
@@ -167,13 +167,13 @@
   </section>
 
   <section class="grid-2 lower">
-    <article class="panel"><h2>🎯 Meta de Poupança</h2><p class="muted">Atinja os teus objetivos mais rápido</p>
+    <article class="panel"><h2>Meta de capital</h2><p class="muted">Atinja os teus objetivos mais rápido</p>
       <div class="goal"><div class="target">🎯</div><div><b id="goalName">Minha meta</b><br><strong id="goalTarget">500.000 Kz</strong><br><span>Já guardado: <span id="goalSaved">120.000</span> Kz</span><br><span>Poupança mensal: <span id="goalMonthly">40.000</span> Kz</span></div></div>
       <div class="progress-label"><span>Progresso</span><b id="goalPct">24%</b></div><div class="progress"><span id="goalProgress"></span></div><p id="goalRemaining">Faltam 380.000 Kz para atingir a meta.</p>
       <div class="mini-grid"><div>Tempo estimado<br><b id="goalMonths">10 meses</b></div><div>Data prevista<br><b id="goalDate">—</b></div></div>
       <button class="secondary-btn" data-page="goals">Gerir metas</button>
     </article>
-    <article class="panel"><h2>Simulador de Crescimento</h2><p class="muted">Vê como o teu capital pode crescer ao longo do tempo</p>
+    <article class="panel"><h2>Projeção de crescimento</h2><p class="muted">Vê como o teu capital pode crescer ao longo do tempo</p>
       <div class="sim-row"><label>Capital inicial</label><input id="initial" type="number" min="0" step="1000"><span>Kz</span></div>
       <div class="sim-row"><label>Aporte mensal</label><input id="monthly" type="number" min="0" step="1000"><span>Kz</span></div>
       <div class="sim-row"><label>Taxa de rendimento anual</label><input id="rate" type="number" step="0.1"><span>%</span></div>
@@ -183,19 +183,19 @@
   </section>
 </section>
 
-<section class="page hidden" id="page-calculator"><div class="page-head"><div><h1>🧮 Calculadora</h1><p>Planeia o teu mês com números reais.</p></div></div><div class="panel"><h2>Orçamento mensal</h2><p class="muted">Os dados ficam associados à tua conta neste dispositivo enquanto preparamos a sincronização na nuvem.</p><div class="big-form">
+<section class="page hidden" id="page-calculator"><div class="page-head"><div><h1>Planeamento</h1><p>Planeia o teu mês com números reais.</p></div></div><div class="panel"><h2>Orçamento mensal</h2><p class="muted">Os dados ficam associados à tua conta neste dispositivo enquanto preparamos a sincronização na nuvem.</p><div class="big-form">
   <div><label>Salário</label><input id="calcSalary" type="number" min="0"></div><div><label>Despesas fixas</label><input id="calcFixed" type="number" min="0"></div><div><label>Despesas variáveis</label><input id="calcVariable" type="number" min="0"></div><div><label>Dívidas</label><input id="calcDebt" type="number" min="0"></div><div><label>Poupança</label><input id="calcSaving" type="number" min="0"></div></div><button class="calculate" id="calcSave">Guardar orçamento</button><div class="summary-grid" id="calcSummary"></div></div></section>
 
-<section class="page hidden" id="page-goals"><div class="page-head"><div><h1>🎯 Metas</h1><p>Cria e acompanha objetivos de poupança.</p></div></div><div class="panel"><div class="toolbar"><button class="calculate" id="addGoal">+ Nova meta</button></div><div id="goalsList" class="cards-list"></div></div></section>
+<section class="page hidden" id="page-goals"><div class="page-head"><div><h1>Metas financeiras</h1><p>Cria e acompanha objetivos de poupança.</p></div></div><div class="panel"><div class="toolbar"><button class="calculate" id="addGoal">+ Nova meta</button></div><div id="goalsList" class="cards-list"></div></div></section>
 
-<section class="page hidden" id="page-investments"><div class="page-head"><div><h1>📈 Investimentos</h1><p>Acompanha o dinheiro que estás a investir.</p></div></div><div class="panel"><div class="big-form"><div><label>Nome</label><input id="invName" placeholder="Ex.: Depósito a prazo"></div><div><label>Valor investido</label><input id="invAmount" type="number" min="0"></div><div><label>Rendimento anual (%)</label><input id="invRate" type="number" step="0.1"></div></div><button class="calculate" id="addInvestment">Adicionar investimento</button><div id="investmentsList" class="cards-list"></div></div></section>
+<section class="page hidden" id="page-investments"><div class="page-head"><div><h1>Investimentos</h1><p>Acompanha o dinheiro que estás a investir.</p></div></div><div class="panel"><div class="big-form"><div><label>Nome</label><input id="invName" placeholder="Ex.: Depósito a prazo"></div><div><label>Valor investido</label><input id="invAmount" type="number" min="0"></div><div><label>Rendimento anual (%)</label><input id="invRate" type="number" step="0.1"></div></div><button class="calculate" id="addInvestment">Adicionar investimento</button><div id="investmentsList" class="cards-list"></div></div></section>
 
-<section class="page hidden" id="page-history"><div class="page-head"><div><h1>◷ Histórico</h1><p>Registos guardados dos teus meses.</p></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Salário</th><th>Despesas</th><th>Poupança</th><th>Sobra</th><th>Total guardado</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
+<section class="page hidden" id="page-history"><div class="page-head"><div><h1>Histórico financeiro</h1><p>Registos guardados dos teus meses.</p></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Salário</th><th>Despesas</th><th>Poupança</th><th>Sobra</th><th>Total guardado</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
 
-<section class="page hidden" id="page-reports"><div class="page-head"><div><h1>📊 Relatórios</h1><p>Resumo rápido da tua evolução financeira.</p></div></div><div class="report-grid" id="reportGrid"></div></section>
+<section class="page hidden" id="page-reports"><div class="page-head"><div><h1>Relatórios</h1><p>Resumo rápido da tua evolução financeira.</p></div></div><div class="report-grid" id="reportGrid"></div></section>
 
 <section class="page hidden" id="page-profile">
-  <div class="page-head"><div><h1>👤 Meu Perfil</h1><p>Os dados da tua conta e informações do cliente.</p></div></div>
+  <div class="page-head"><div><h1>Perfil do cliente</h1><p>Os dados da tua conta e informações do cliente.</p></div></div>
   <div class="profile-grid">
     <article class="panel profile-card">
       <div class="profile-avatar" id="profileAvatar">U</div>
@@ -230,9 +230,9 @@
   </div>
 </section>
 
-<section class="page hidden" id="page-settings"><div class="page-head"><div><h1>⚙️ Definições</h1><p>Personaliza o teu MeuCapital.</p></div></div><div class="panel"><div class="big-form"><div><label>Nome</label><input id="userName"></div><div><label>Meta de poupança (%)</label><input id="targetPct" type="number" min="0" max="100"></div><div><label>Moeda</label><select id="currency"><option>Kz</option><option>USD</option><option>EUR</option></select></div></div><button class="calculate" id="saveSettings">Guardar definições</button><button class="danger-btn" id="resetData">Apagar dados deste dispositivo</button></div></section>
+<section class="page hidden" id="page-settings"><div class="page-head"><div><h1>Definições</h1><p>Personaliza o teu MeuCapital.</p></div></div><div class="panel"><div class="big-form"><div><label>Nome</label><input id="userName"></div><div><label>Meta de poupança (%)</label><input id="targetPct" type="number" min="0" max="100"></div><div><label>Moeda</label><select id="currency"><option>Kz</option><option>USD</option><option>EUR</option></select></div></div><button class="calculate" id="saveSettings">Guardar definições</button><button class="danger-btn" id="resetData">Apagar dados deste dispositivo</button></div></section>
 
-<footer>© 2026 MeuCapital. Todos os direitos reservados. <span>Feito com ❤️ em Angola</span></footer>
+<footer>© 2026 MeuCapital. Gestão financeira pessoal. <span>Angola · Privacidade e segurança</span></footer>
 </main></div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

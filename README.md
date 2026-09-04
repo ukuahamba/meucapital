@@ -1,26 +1,15 @@
-# MeuCapital V5 — Login (corrigido)
+# MeuCapital V8 — Recuperação de palavra-passe corrigida
 
-Versão corrigida do MeuCapital com Supabase Auth.
+Versão baseada no V7, com a recuperação de palavra-passe corrigida para o Supabase.
 
-Inclui:
-- Criar conta
-- Login
-- Confirmação de e-mail
-- Recuperação de palavra-passe
-- Logout
-- Sessão persistente
-- Dados locais separados por utilizador neste dispositivo
-- Favicon e apresentação
+## O que foi corrigido
+- O e-mail de recuperação redireciona para `https://ukuahamba.github.io/meucapital/`.
+- A aplicação reconhece o fluxo `PASSWORD_RECOVERY` do Supabase.
+- Suporta links de recuperação com sessão no hash e com `code` na URL.
+- Abre automaticamente a janela para definir uma nova palavra-passe.
+- Usa `supabaseClient.auth.updateUser({ password })` depois de a sessão de recuperação estar estabelecida.
+- Valida pelo menos 8 caracteres e confirmação da nova palavra-passe.
+- Limpa a URL depois da atualização.
 
-Correção principal:
-- A autenticação agora é inicializada depois de o estado e os dados padrão do MeuCapital estarem carregados, evitando erro de JavaScript na abertura do site.
-
-Próxima etapa: configurar as URLs de autenticação no Supabase e depois criar as tabelas/RLS para sincronizar os dados na nuvem.
-
-Nunca colocar uma Secret/Service Role key no frontend.
-
-
-V6: confirmação de criação de conta por código OTP de 6 dígitos. No Supabase, o template "Confirm signup" deve usar {{ .Token }} para enviar o código.
-
-
-V7: corrigida a recuperação de palavra-passe para não usar hash personalizado no redirect, preservando o token de sessão do Supabase.
+## Ficheiros
+`index.html`, `style.css`, `script.js`, `README.md`, `favicon.png`, `apple-touch-icon.png`, `meucapital-apresentacao.png`.

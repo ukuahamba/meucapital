@@ -50,6 +50,7 @@ const setAccountStorage=(user)=>{
   if(user.user_metadata?.full_name && (!state.userName || state.userName==="Letal")) state.userName=user.user_metadata.full_name;
 };
 const bootAuth=async()=>{
+  await handlePasswordRecovery();
   const {data:{session}}=await supabaseClient.auth.getSession();
   if(session){
     setAccountStorage(session.user);
@@ -57,14 +58,6 @@ const bootAuth=async()=>{
   } else {
     showAuth();
   }
-  supabaseClient.auth.onAuthStateChange((event,session)=>{
-    if(session){
-      setAccountStorage(session.user);
-      showApp(session.user);
-    } else {
-      showAuth();
-    }
-  });
 };
 
 $("showSignup").onclick=()=>authView("authSignupView");
@@ -134,28 +127,83 @@ $("resendOtp").onclick=async()=>{
 
 $("backToLoginFromOtp").onclick=()=>authView("authLoginView");
 
+const RECOVERY_REDIRECT="https://ukuahamba.github.io/meucapital/";
+
 $("resetForm").addEventListener("submit",async(e)=>{
   e.preventDefault();
   setAuthMessage("A enviar o e-mail de recuperação...");
   const email=$("resetEmail").value.trim();
   const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
-    redirectTo:window.location.href.split("#")[0]+"?reset-password=1"
+    redirectTo:RECOVERY_REDIRECT
   });
   if(error) setAuthMessage(error.message||"Não foi possível enviar o e-mail.",true);
-  else setAuthMessage("E-mail enviado. Abre-o e segue o link para definir uma nova palavra-passe.");
+  else setAuthMessage("E-mail enviado. Abre-o e toca em “Reset your password” para escolher uma nova palavra-passe.");
 });
+
+const openPasswordRecovery=()=>{
+  $("passwordUpdateModal").classList.remove("hidden");
+  $("newPassword").focus();
+};
 
 $("updatePasswordForm").addEventListener("submit",async(e)=>{
   e.preventDefault();
   const p=$("newPassword").value;
   const c=$("newPasswordConfirm").value;
   const msg=$("updatePasswordMessage");
+  msg.classList.remove("error");
+  if(p.length<8){msg.textContent="A nova palavra-passe deve ter pelo menos 8 caracteres.";msg.classList.add("error");return;}
   if(p!==c){msg.textContent="As palavras-passe não coincidem.";msg.classList.add("error");return;}
+  msg.textContent="A atualizar a palavra-passe...";
   const {error}=await supabaseClient.auth.updateUser({password:p});
-  if(error){msg.textContent=error.message||"Não foi possível atualizar.";msg.classList.add("error");return;}
-  msg.classList.remove("error");msg.textContent="Palavra-passe atualizada com sucesso.";
-  setTimeout(()=>{ $("passwordUpdateModal").classList.add("hidden"); window.location.hash=""; },900);
+  if(error){msg.textContent=error.message||"Não foi possível atualizar a palavra-passe.";msg.classList.add("error");return;}
+  msg.textContent="Palavra-passe atualizada com sucesso! 🎉";
+  $("newPassword").value="";
+  $("newPasswordConfirm").value="";
+  setTimeout(()=>{
+    $("passwordUpdateModal").classList.add("hidden");
+    window.history.replaceState({},document.title,RECOVERY_REDIRECT);
+  },1200);
 });
+
+const handlePasswordRecovery=async()=>{
+  const query=new URLSearchParams(window.location.search);
+  const hash=new URLSearchParams(window.location.hash.replace(/^#/,""));
+  const hasRecoveryHash=hash.get("type")==="recovery";
+  const hasRecoveryFlag=query.get("reset-password")==="1";
+  const code=query.get("code");
+
+  if(code){
+    const {error}=await supabaseClient.auth.exchangeCodeForSession(code);
+    if(error){
+      setAuthMessage(error.message||"O link de recuperação expirou ou já foi utilizado.",true);
+      authView("authLoginView");
+      return;
+    }
+    window.history.replaceState({},document.title,RECOVERY_REDIRECT);
+    openPasswordRecovery();
+    return;
+  }
+
+  if(hasRecoveryHash || hasRecoveryFlag){
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(session){
+      setAccountStorage(session.user);
+      showApp(session.user);
+      openPasswordRecovery();
+      return;
+    }
+    setAuthMessage("O link de recuperação não é válido ou já expirou. Pede uma nova recuperação.",true);
+  }
+};
+
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+  if(event==="PASSWORD_RECOVERY" && session){
+    setAccountStorage(session.user);
+    showApp(session.user);
+    openPasswordRecovery();
+  }
+});
+window.addEventListener("hashchange",()=>{void handlePasswordRecovery();});
 
 $("logoutBtn").onclick=async()=>{
   await supabaseClient.auth.signOut();
@@ -163,15 +211,6 @@ $("logoutBtn").onclick=async()=>{
   setAuthMessage("");
   authView("authLoginView");
 };
-
-const handlePasswordRecovery=()=>{
-  const isRecovery=new URLSearchParams(window.location.search).get("reset-password")==="1";
-  if(isRecovery){
-    $("passwordUpdateModal").classList.remove("hidden");
-  }
-};
-window.addEventListener("hashchange",handlePasswordRecovery);
-handlePasswordRecovery();
 
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
 const defaults={

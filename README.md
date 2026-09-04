@@ -13,3 +13,6 @@ Publicado com GitHub Pages.
 
 
 V3: inclui a imagem de apresentação visual do MeuCapital em `meucapital-apresentacao.png`, integrada na página principal.
+
+
+V4: favicon do MeuCapital integrado no `index.html`, com `favicon.png` e `apple-touch-icon.png`.

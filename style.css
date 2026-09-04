@@ -56,3 +56,17 @@
   .client-stat{min-height:0;padding:14px}
   .client-stat b{font-size:19px}
 }
+
+/* V14 — feedback de toque, estados de processamento e resposta rápida */
+button{transition:transform .12s ease,filter .16s ease,box-shadow .16s ease,border-color .16s ease,background .16s ease,opacity .16s ease}
+button:hover:not(:disabled){filter:brightness(1.07)}
+button:active:not(:disabled),button.is-pressed:not(:disabled){transform:scale(.965);filter:brightness(1.14);box-shadow:0 0 0 3px rgba(32,212,122,.10),0 8px 22px rgba(32,212,122,.10)}
+button:focus-visible{outline:2px solid rgba(32,212,122,.75);outline-offset:2px}
+button:disabled{cursor:wait;opacity:.72}
+.is-loading{position:relative;pointer-events:none}
+.btn-spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:7px;animation:mcSpin .65s linear infinite}
+@keyframes mcSpin{to{transform:rotate(360deg)}}
+.toast{box-shadow:0 12px 34px rgba(0,0,0,.28)}
+.auth-submit.is-loading{box-shadow:0 0 0 3px rgba(32,212,122,.08),0 10px 30px rgba(32,212,122,.16)}
+.logout-btn.is-loading{border-color:rgba(32,212,122,.30);color:#9beabd}
+@media (prefers-reduced-motion: reduce){button,.health-meter,.toast{transition:none!important}.btn-spinner{animation:none}}

@@ -45,6 +45,30 @@ const showAuth=()=>{
   authScreen.classList.remove("hidden");
 };
 const escapeHtml=(s)=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+
+const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+const withTimeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("TIMEOUT")),ms))]);
+function buttonBusy(btn,busy,label){
+  if(!btn)return;
+  if(busy){
+    btn.dataset.originalText=btn.innerHTML;
+    btn.disabled=true;
+    btn.classList.add("is-loading","is-pressed");
+    btn.innerHTML=`<span class="btn-spinner" aria-hidden="true"></span><span>${label||"A processar..."}</span>`;
+  }else{
+    btn.disabled=false;
+    btn.classList.remove("is-loading","is-pressed");
+    if(btn.dataset.originalText) btn.innerHTML=btn.dataset.originalText;
+  }
+}
+function flashButton(btn){
+  if(!btn)return;
+  btn.classList.remove("is-pressed");
+  void btn.offsetWidth;
+  btn.classList.add("is-pressed");
+  setTimeout(()=>btn.classList.remove("is-pressed"),420);
+  if(navigator.vibrate) navigator.vibrate(12);
+}
 const setAccountStorage=(user)=>{
   if(!user)return;
   KEY=`meucapital-v5:${user.id}`;
@@ -70,35 +94,41 @@ $("backToLoginFromReset").onclick=()=>authView("authLoginView");
 
 $("loginForm").addEventListener("submit",async(e)=>{
   e.preventDefault();
+  const btn=e.currentTarget.querySelector("button[type=submit]");
+  flashButton(btn);
+  buttonBusy(btn,true,"A entrar...");
   setAuthMessage("A entrar...");
   const email=$("loginEmail").value.trim();
   const password=$("loginPassword").value;
-  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
-  if(error) setAuthMessage(error.message||"Não foi possível entrar.",true);
+  try{
+    const {error}=await withTimeout(supabaseClient.auth.signInWithPassword({email,password}),12000);
+    if(error) setAuthMessage(error.message||"Não foi possível entrar.",true);
+  }catch(err){
+    setAuthMessage(err?.message==="TIMEOUT"?"O servidor está a demorar. Verifica a ligação e tenta novamente.":"Não foi possível entrar.",true);
+  }finally{buttonBusy(btn,false);}
 });
 
 $("signupForm").addEventListener("submit",async(e)=>{
   e.preventDefault();
+  const btn=e.currentTarget.querySelector("button[type=submit]");
+  flashButton(btn);
+  buttonBusy(btn,true,"A criar conta...");
   setAuthMessage("A criar a tua conta...");
   const name=$("signupName").value.trim();
   const email=$("signupEmail").value.trim();
   const password=$("signupPassword").value;
-  const {data,error}=await supabaseClient.auth.signUp({
-    email,password,
-    options:{data:{full_name:name},emailRedirectTo:window.location.href.split("#")[0]}
-  });
-  if(error){ setAuthMessage(error.message||"Não foi possível criar a conta.",true); return; }
-  if(data.session){
-    setAuthMessage("Conta criada. A entrar...");
-    return;
-  }
-  pendingSignupEmail=email;
-  pendingSignupPassword=password;
-  pendingSignupName=name;
-  $("otpEmailLabel").textContent=email;
-  $("signupOtp").value="";
-  authView("authOtpView");
-  setAuthMessage("Código enviado. Verifica o teu e-mail.");
+  try{
+    const {data,error}=await withTimeout(supabaseClient.auth.signUp({
+      email,password,
+      options:{data:{full_name:name},emailRedirectTo:window.location.href.split("#")[0]}
+    }),12000);
+    if(error){ setAuthMessage(error.message||"Não foi possível criar a conta.",true); return; }
+    if(data.session){setAuthMessage("Conta criada. A entrar...");return;}
+    pendingSignupEmail=email; pendingSignupPassword=password; pendingSignupName=name;
+    $("otpEmailLabel").textContent=email; $("signupOtp").value=""; authView("authOtpView");
+    setAuthMessage("Código enviado. Verifica o teu e-mail.");
+  }catch(err){setAuthMessage(err?.message==="TIMEOUT"?"O servidor está a demorar. Tenta novamente.":"Não foi possível criar a conta.",true);}
+  finally{buttonBusy(btn,false);}
 });
 
 $("otpForm").addEventListener("submit",async(e)=>{
@@ -209,9 +239,20 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
 window.addEventListener("hashchange",()=>{void handlePasswordRecovery();});
 
 $("logoutBtn").onclick=async()=>{
-  await supabaseClient.auth.signOut();
-  setAuthMessage("");
+  const btn=$("logoutBtn");
+  flashButton(btn);
+  btn.disabled=true;
+  btn.classList.add("is-loading");
+  const original=btn.innerHTML;
+  btn.innerHTML=`<span class="btn-spinner" aria-hidden="true"></span><span>A sair...</span>`;
+  // A interface termina a sessão imediatamente; o pedido à rede continua em segundo plano.
+  currentUser=null;
+  document.body.classList.add("auth-locked");
+  authScreen.classList.remove("hidden");
   authView("authLoginView");
+  setAuthMessage("Sessão terminada.");
+  try{await withTimeout(supabaseClient.auth.signOut(),5000);}catch(_){}
+  btn.disabled=false; btn.classList.remove("is-loading"); btn.innerHTML=original;
 };
 
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
@@ -452,13 +493,18 @@ $("profileAvatarInput").addEventListener("change",e=>{
   e.target.value="";
 });
 $("saveProfile").onclick=async()=>{
+  const btn=$("saveProfile"); flashButton(btn);
   const name=$("profileEditName").value.trim();
   if(!name){toast("Introduz o teu nome.");return;}
-  const {data,error}=await supabaseClient.auth.updateUser({data:{full_name:name}});
-  if(error){toast(error.message||"Não foi possível guardar os dados.");return;}
-  state.userName=name;save();currentUser=data.user||currentUser;
-  document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(name)}</b>`;
-  renderProfile();renderSettings();toast("Dados do cliente atualizados! ✓");
+  buttonBusy(btn,true,"A guardar...");
+  try{
+    const {data,error}=await withTimeout(supabaseClient.auth.updateUser({data:{full_name:name}}),10000);
+    if(error){toast(error.message||"Não foi possível guardar os dados.");return;}
+    state.userName=name;save();currentUser=data.user||currentUser;
+    document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(name)}</b>`;
+    renderProfile();renderSettings();toast("Dados do cliente atualizados! ✓");
+  }catch(err){toast(err?.message==="TIMEOUT"?"O servidor demorou. Tenta novamente.":"Não foi possível guardar os dados.");}
+  finally{buttonBusy(btn,false);}
 };
 $("profileChangePassword").onclick=()=>openPasswordRecovery();
 $("profileLogout").onclick=()=>$("logoutBtn").click();
@@ -467,6 +513,28 @@ $("ruleLink").onclick=e=>{e.preventDefault();alert("A regra 50/30/20 é uma refe
 $("notifyBtn").onclick=()=>toast("Não tens novas notificações.");
 document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;
 renderDashboard();renderHistory();
+
+// Feedback táctil/visual global para todos os botões.
+document.addEventListener("pointerdown",e=>{
+  const btn=e.target.closest("button,[role=button]");
+  if(!btn || btn.disabled)return;
+  btn.classList.add("is-pressed");
+});
+document.addEventListener("pointerup",e=>{
+  const btn=e.target.closest("button,[role=button]");
+  if(!btn)return;
+  setTimeout(()=>btn.classList.remove("is-pressed"),120);
+});
+document.addEventListener("pointercancel",e=>{
+  const btn=e.target.closest("button,[role=button]");
+  if(btn)btn.classList.remove("is-pressed");
+});
+document.addEventListener("keydown",e=>{
+  if((e.key==="Enter"||e.key===" ") && document.activeElement?.matches("button,[role=button]")) document.activeElement.classList.add("is-pressed");
+});
+document.addEventListener("keyup",e=>{
+  if(e.key==="Enter"||e.key===" "){const btn=document.activeElement?.matches("button,[role=button]")?document.activeElement:null;if(btn)btn.classList.remove("is-pressed");}
+});
 
 // Start authentication only after the app state/defaults are initialized.
 bootAuth();

@@ -401,3 +401,6 @@ button.is-pressed{transform:translateY(1px) scale(.98);filter:brightness(1.16);b
 .cloud-sync-status{margin:0 0 18px;padding:12px 16px;border:1px solid rgba(64,214,147,.18);border-radius:14px;background:rgba(8,32,28,.58);color:#9fb6c1;font-size:.9rem;display:flex;align-items:center;gap:9px}.cloud-sync-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#8c9aa4;box-shadow:0 0 0 4px rgba(140,154,164,.08)}.cloud-sync-status[data-state="syncing"]:before{background:#f2b84b;animation:mcSyncPulse 1s infinite}.cloud-sync-status[data-state="ok"]{border-color:rgba(64,214,147,.28);color:#b8e9d0}.cloud-sync-status[data-state="ok"]:before{background:#39d98a;box-shadow:0 0 0 4px rgba(57,217,138,.10)}.cloud-sync-status[data-state="error"]{border-color:rgba(255,105,105,.24);color:#ffc2c2}.cloud-sync-status[data-state="error"]:before{background:#ff6b6b;box-shadow:0 0 0 4px rgba(255,107,107,.10)}@keyframes mcSyncPulse{50%{opacity:.35;transform:scale(.78)}}
 
 .field-status{display:block;color:#73818d;font-size:11px;line-height:1.35;margin-top:-1px}.field-status[data-state="ok"]{color:#63dda0}.field-status[data-state="error"]{color:#ff7b7b}input[readonly]{opacity:.9;cursor:not-allowed}
+
+/* V21 — estados de reconhecimento de BIN */
+.field-status[data-state="neutral"]{color:#e4b85d}

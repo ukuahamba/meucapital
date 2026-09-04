@@ -1,7 +1,141 @@
-const KEY="meucapital-v2";
+const SUPABASE_URL="https://ozwyxcuhhujnhymwqgjb.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_vGMyphDHDA6K1ZoI3anfhQ_rKnM_SzM";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let currentUser=null;
+let KEY="meucapital-v5";
 const $=id=>document.getElementById(id);
 const fmt=n=>new Intl.NumberFormat("pt-AO").format(Math.round(Number(n)||0));
 const money=n=>fmt(n)+" "+(state.currency||"Kz");
+
+/* =========================
+   MeuCapital V5 — Auth
+   ========================= */
+const authScreen=$("authScreen");
+const authMessage=$("authMessage");
+const setAuthMessage=(msg,error=false)=>{
+  authMessage.textContent=msg||"";
+  authMessage.classList.toggle("error",!!error);
+};
+const authView=(view)=>{
+  ["authLoginView","authSignupView","authResetView"].forEach(id=>$(id).classList.add("hidden"));
+  $(view).classList.remove("hidden");
+  setAuthMessage("");
+};
+const showApp=(user)=>{
+  currentUser=user;
+  document.body.classList.remove("auth-locked");
+  authScreen.classList.add("hidden");
+  const email=user?.email||"";
+  const suggested=(user?.user_metadata?.full_name||email.split("@")[0]||"Utilizador").trim();
+  if(!state || !state.userName || state.userName==="Letal") state.userName=suggested;
+  save();
+  const userEl=document.querySelector(".user");
+  if(userEl) userEl.innerHTML=`Olá, <b>${escapeHtml(state.userName)}</b> 👋`;
+  renderDashboard(); renderHistory();
+};
+const showAuth=()=>{
+  currentUser=null;
+  document.body.classList.add("auth-locked");
+  authScreen.classList.remove("hidden");
+};
+const escapeHtml=(s)=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const setAccountStorage=(user)=>{
+  if(!user)return;
+  KEY=`meucapital-v5:${user.id}`;
+  const raw=localStorage.getItem(KEY);
+  state=raw?JSON.parse(raw):structuredClone(defaults);
+  if(user.user_metadata?.full_name && (!state.userName || state.userName==="Letal")) state.userName=user.user_metadata.full_name;
+};
+const bootAuth=async()=>{
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(session){
+    setAccountStorage(session.user);
+    showApp(session.user);
+  } else {
+    showAuth();
+  }
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    if(session){
+      setAccountStorage(session.user);
+      showApp(session.user);
+    } else {
+      showAuth();
+    }
+  });
+};
+
+$("showSignup").onclick=()=>authView("authSignupView");
+$("showReset").onclick=()=>authView("authResetView");
+$("backToLoginFromSignup").onclick=()=>authView("authLoginView");
+$("backToLoginFromReset").onclick=()=>authView("authLoginView");
+
+$("loginForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  setAuthMessage("A entrar...");
+  const email=$("loginEmail").value.trim();
+  const password=$("loginPassword").value;
+  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error) setAuthMessage(error.message||"Não foi possível entrar.",true);
+});
+
+$("signupForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  setAuthMessage("A criar a tua conta...");
+  const name=$("signupName").value.trim();
+  const email=$("signupEmail").value.trim();
+  const password=$("signupPassword").value;
+  const {data,error}=await supabaseClient.auth.signUp({
+    email,password,
+    options:{data:{full_name:name},emailRedirectTo:window.location.href.split("#")[0]}
+  });
+  if(error){ setAuthMessage(error.message||"Não foi possível criar a conta.",true); return; }
+  if(data.session){
+    setAuthMessage("Conta criada. A entrar...");
+  } else {
+    setAuthMessage("Conta criada! Verifica o teu e-mail antes de entrares.");
+    $("signupForm").reset();
+  }
+});
+
+$("resetForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  setAuthMessage("A enviar o e-mail de recuperação...");
+  const email=$("resetEmail").value.trim();
+  const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.href.split("#")[0]+"#reset-password"
+  });
+  if(error) setAuthMessage(error.message||"Não foi possível enviar o e-mail.",true);
+  else setAuthMessage("E-mail enviado. Abre-o e segue o link para definir uma nova palavra-passe.");
+});
+
+$("updatePasswordForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const p=$("newPassword").value;
+  const c=$("newPasswordConfirm").value;
+  const msg=$("updatePasswordMessage");
+  if(p!==c){msg.textContent="As palavras-passe não coincidem.";msg.classList.add("error");return;}
+  const {error}=await supabaseClient.auth.updateUser({password:p});
+  if(error){msg.textContent=error.message||"Não foi possível atualizar.";msg.classList.add("error");return;}
+  msg.classList.remove("error");msg.textContent="Palavra-passe atualizada com sucesso.";
+  setTimeout(()=>{ $("passwordUpdateModal").classList.add("hidden"); window.location.hash=""; },900);
+});
+
+$("logoutBtn").onclick=async()=>{
+  await supabaseClient.auth.signOut();
+  localStorage.removeItem(KEY);
+  setAuthMessage("");
+  authView("authLoginView");
+};
+
+const handlePasswordRecovery=()=>{
+  if(window.location.hash.includes("reset-password")){
+    $("passwordUpdateModal").classList.remove("hidden");
+  }
+};
+window.addEventListener("hashchange",handlePasswordRecovery);
+handlePasswordRecovery();
+bootAuth();
+
 const toast=t=>{const el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)};
 const defaults={
   userName:"Letal",currency:"Kz",targetPct:20,
@@ -17,7 +151,7 @@ const defaults={
   goals:[{name:"Minha meta",target:500000,saved:120000,monthly:40000}]
 };
 let state=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(defaults);
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){if(currentUser) localStorage.setItem(KEY,JSON.stringify(state))}
 function setVal(id,v){if($(id))$(id).value=v}
 function calcBudget(b=state.budget){
   const salary=+b.salary||0,fixed=+b.fixed||0,variable=+b.variable||0,debt=+b.debt||0,saving=+b.saving||0;

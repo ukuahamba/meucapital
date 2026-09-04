@@ -15,10 +15,77 @@
 
 </head>
 <body>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <img src="favicon.png" alt="MeuCapital" class="auth-logo">
+      <div><div class="logo">Meu<span>Capital</span></div><div class="tagline">Planeia hoje, vive melhor amanhã.</div></div>
+    </div>
+
+    <div id="authLoginView">
+      <h1>Bem-vindo ao MeuCapital</h1>
+      <p class="auth-subtitle">Entra na tua conta para gerir as tuas finanças.</p>
+      <form id="loginForm" class="auth-form">
+        <label for="loginEmail">E-mail</label>
+        <input id="loginEmail" type="email" autocomplete="email" placeholder="teuemail@exemplo.com" required>
+        <label for="loginPassword">Palavra-passe</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="A tua palavra-passe" required>
+        <button class="calculate auth-submit" type="submit">Entrar</button>
+      </form>
+      <button class="auth-link" id="showSignup">Ainda não tens conta? Criar conta</button>
+      <button class="auth-link muted-link" id="showReset">Esqueci-me da palavra-passe</button>
+    </div>
+
+    <div id="authSignupView" class="hidden">
+      <h1>Criar a tua conta</h1>
+      <p class="auth-subtitle">Começa a organizar o teu dinheiro com o MeuCapital.</p>
+      <form id="signupForm" class="auth-form">
+        <label for="signupName">Nome</label>
+        <input id="signupName" type="text" autocomplete="name" placeholder="O teu nome" required>
+        <label for="signupEmail">E-mail</label>
+        <input id="signupEmail" type="email" autocomplete="email" placeholder="teuemail@exemplo.com" required>
+        <label for="signupPassword">Palavra-passe</label>
+        <input id="signupPassword" type="password" autocomplete="new-password" placeholder="Mínimo recomendado: 8 caracteres" minlength="8" required>
+        <button class="calculate auth-submit" type="submit">Criar conta</button>
+      </form>
+      <button class="auth-link" id="backToLoginFromSignup">Já tens conta? Entrar</button>
+    </div>
+
+    <div id="authResetView" class="hidden">
+      <h1>Recuperar palavra-passe</h1>
+      <p class="auth-subtitle">Enviaremos um e-mail para criares uma nova palavra-passe.</p>
+      <form id="resetForm" class="auth-form">
+        <label for="resetEmail">E-mail</label>
+        <input id="resetEmail" type="email" autocomplete="email" placeholder="teuemail@exemplo.com" required>
+        <button class="calculate auth-submit" type="submit">Enviar recuperação</button>
+      </form>
+      <button class="auth-link" id="backToLoginFromReset">Voltar ao login</button>
+    </div>
+
+    <div id="authMessage" class="auth-message" role="status" aria-live="polite"></div>
+    <div class="auth-footer">Os teus dados de conta são geridos de forma segura pelo Supabase.</div>
+  </div>
+</div>
+
+<div id="passwordUpdateModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <h2>Nova palavra-passe</h2>
+    <p class="muted">Escolhe uma nova palavra-passe para a tua conta.</p>
+    <form id="updatePasswordForm" class="auth-form">
+      <label for="newPassword">Nova palavra-passe</label>
+      <input id="newPassword" type="password" minlength="8" autocomplete="new-password" required>
+      <label for="newPasswordConfirm">Confirmar palavra-passe</label>
+      <input id="newPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required>
+      <button class="calculate" type="submit">Atualizar palavra-passe</button>
+    </form>
+    <div id="updatePasswordMessage" class="auth-message"></div>
+  </div>
+</div>
+
 <header class="topbar">
   <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
   <div class="brand"><div class="logo">Meu<span>Capital</span></div><div class="tagline">Planeia hoje, vive melhor amanhã.</div></div>
-  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações">♧</button><div class="user">Olá, <b>Letal</b> 👋</div></div>
+  <div class="top-actions"><button class="icon-btn" id="notifyBtn" aria-label="Notificações">♧</button><div class="user">Olá, <b>Letal</b> 👋</div><button class="logout-btn" id="logoutBtn">Sair</button></div>
 </header>
 
 <div class="layout">
@@ -103,7 +170,7 @@
   </section>
 </section>
 
-<section class="page hidden" id="page-calculator"><div class="page-head"><div><h1>🧮 Calculadora</h1><p>Planeia o teu mês com números reais.</p></div></div><div class="panel"><h2>Orçamento mensal</h2><p class="muted">Os dados ficam guardados neste dispositivo.</p><div class="big-form">
+<section class="page hidden" id="page-calculator"><div class="page-head"><div><h1>🧮 Calculadora</h1><p>Planeia o teu mês com números reais.</p></div></div><div class="panel"><h2>Orçamento mensal</h2><p class="muted">Os dados ficam associados à tua conta neste dispositivo enquanto preparamos a sincronização na nuvem.</p><div class="big-form">
   <div><label>Salário</label><input id="calcSalary" type="number" min="0"></div><div><label>Despesas fixas</label><input id="calcFixed" type="number" min="0"></div><div><label>Despesas variáveis</label><input id="calcVariable" type="number" min="0"></div><div><label>Dívidas</label><input id="calcDebt" type="number" min="0"></div><div><label>Poupança</label><input id="calcSaving" type="number" min="0"></div></div><button class="calculate" id="calcSave">Guardar orçamento</button><div class="summary-grid" id="calcSummary"></div></div></section>
 
 <section class="page hidden" id="page-goals"><div class="page-head"><div><h1>🎯 Metas</h1><p>Cria e acompanha objetivos de poupança.</p></div></div><div class="panel"><div class="toolbar"><button class="calculate" id="addGoal">+ Nova meta</button></div><div id="goalsList" class="cards-list"></div></div></section>
@@ -119,5 +186,6 @@
 <footer>© 2026 MeuCapital. Todos os direitos reservados. <span>Feito com ❤️ em Angola</span></footer>
 </main></div>
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
 </body></html>

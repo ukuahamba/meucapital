@@ -1,18 +1,17 @@
-# MeuCapital
-Versão 2 do site MeuCapital.
+# MeuCapital V5 — Autenticação
 
-## Publicação
-Ficheiros principais:
-- index.html
-- style.css
-- script.js
+Esta versão integra o frontend do MeuCapital com o Supabase Auth.
 
-O site funciona como uma aplicação front-end e guarda os dados no `localStorage` do navegador. Para dados de utilizadores reais, login, sincronização entre dispositivos e pagamentos, será necessário um backend/banco de dados.
+Inclui:
+- Criar conta com nome, e-mail e palavra-passe
+- Login
+- Confirmação de e-mail
+- Recuperação de palavra-passe
+- Logout
+- Sessão persistente
+- Dados locais separados por utilizador neste dispositivo
+- Favicon e imagem de apresentação mantidos
 
-Publicado com GitHub Pages.
+Próxima etapa: criar as tabelas do MeuCapital no Supabase e ativar RLS para sincronizar receitas, despesas, metas, investimentos e histórico na nuvem.
 
-
-V3: inclui a imagem de apresentação visual do MeuCapital em `meucapital-apresentacao.png`, integrada na página principal.
-
-
-V4: favicon do MeuCapital integrado no `index.html`, com `favicon.png` e `apple-touch-icon.png`.
+Importante: a Publishable key pode ser usada no frontend. Nunca colocar uma Secret/Service Role key no site.

@@ -477,7 +477,7 @@ function recordHistory(){
 }
 document.querySelectorAll(".nav-item,[data-page]").forEach(el=>el.addEventListener("click",e=>{const p=e.currentTarget.dataset.page;if(p)navigate(p)}));
 $("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
-$("calculate").onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento guardado!");};
+const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onclick=()=>{syncBudgetInputs();recordHistory();toast("Orçamento guardado!");};
 ["salary","fixed","variable","debt","saving"].forEach(id=>$(id).addEventListener("input",()=>{state.budget[id]=+$(id).value||0;save();renderDashboard()}));
 ["initial","monthly","rate","years"].forEach(id=>$(id).addEventListener("input",()=>{state.sim[id]=+$(id).value||0;save();renderSim()}));
 $("calcSave").onclick=()=>{state.budget={salary:+$("calcSalary").value||0,fixed:+$("calcFixed").value||0,variable:+$("calcVariable").value||0,debt:+$("calcDebt").value||0,saving:+$("calcSaving").value||0};save();recordHistory();renderCalculator();renderDashboard();toast("Orçamento guardado!");};
@@ -510,7 +510,15 @@ $("profileChangePassword").onclick=()=>openPasswordRecovery();
 $("profileLogout").onclick=()=>$("logoutBtn").click();
 $("tipBtn").onclick=()=>alert("Uma boa regra inicial é guardar pelo menos 20% do rendimento. Ajusta a percentagem à tua realidade e mantém uma reserva para emergências.");
 $("ruleLink").onclick=e=>{e.preventDefault();alert("A regra 50/30/20 é uma referência: cerca de 50% para necessidades, 30% para desejos e 20% para poupança/investimento. Não é uma regra obrigatória.")};
-$("notifyBtn").onclick=()=>toast("Não tens novas notificações.");
+$("notifyBtn").onclick=()=>{
+  const panel=$("mc17Notifications");
+  if(!panel)return;
+  const open=!panel.classList.contains("is-open");
+  panel.classList.toggle("is-open",open);
+  $("notifyBtn").setAttribute("aria-expanded",String(open));
+};
+if($("mc17CloseNotif")) $("mc17CloseNotif").onclick=()=>{ $("mc17Notifications")?.classList.remove("is-open"); $("notifyBtn")?.setAttribute("aria-expanded","false"); };
+if($("mc17SeeNotifications")) $("mc17SeeNotifications").onclick=()=>toast("Estas são as notificações recentes da tua conta.");
 document.querySelector(".user").innerHTML=`<span class="user-greeting">Olá,</span> <b>${escapeHtml(state.userName)}</b>`;
 renderDashboard();renderHistory();
 

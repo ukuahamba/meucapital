@@ -101,8 +101,18 @@ $("loginForm").addEventListener("submit",async(e)=>{
   const email=$("loginEmail").value.trim();
   const password=$("loginPassword").value;
   try{
-    const {error}=await withTimeout(supabaseClient.auth.signInWithPassword({email,password}),12000);
-    if(error) setAuthMessage(error.message||"Não foi possível entrar.",true);
+    const {data,error}=await withTimeout(supabaseClient.auth.signInWithPassword({email,password}),12000);
+    if(error){
+      setAuthMessage(error.message||"Não foi possível entrar.",true);
+      return;
+    }
+    // Entra imediatamente com a sessão devolvida pelo Supabase, sem exigir atualização da página.
+    if(data?.session){
+      setAccountStorage(data.session.user);
+      showApp(data.session.user);
+      return;
+    }
+    setAuthMessage("Sessão iniciada, mas não foi possível carregar a conta.",true);
   }catch(err){
     setAuthMessage(err?.message==="TIMEOUT"?"O servidor está a demorar. Verifica a ligação e tenta novamente.":"Não foi possível entrar.",true);
   }finally{buttonBusy(btn,false);}

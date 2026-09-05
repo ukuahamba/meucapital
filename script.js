@@ -361,8 +361,34 @@ function calcBudget(b=state.budget){
   const expenses=fixed+variable+debt,left=Math.max(0,salary-expenses-saving),pct=salary?saving/salary*100:0;
   return {salary,fixed,variable,debt,saving,expenses,left,pct};
 }
+function renderDashboardCard(){
+  const slot=$("mc17CardSlot");
+  if(!slot)return;
+  const card=(state.cards||[])[0];
+  if(!card){
+    slot.innerHTML=`<div class="mc17-bank-card mc17-card-empty" aria-label="Adicionar cartão">
+      <div class="mc17-card-top"><b>Meu<span>Capital</span></b><span>WALLET</span></div>
+      <div class="mc17-card-empty-title">Adiciona o teu primeiro cartão</div>
+      <div class="mc17-card-empty-hint">Os dados sensíveis nunca são pedidos.</div>
+    </div>`;
+    return;
+  }
+  const issuer=escapeHtml(card.issuer||"Emissor não confirmado");
+  const name=escapeHtml(card.name||"Cartão principal");
+  const last4=escapeHtml(card.last4||"----");
+  const type=escapeHtml(card.type||"Débito");
+  slot.innerHTML=`<div class="mc17-bank-card mc17-real-card ${cardTheme(card.issuer||"")}" aria-label="Cartão ${name}">
+    <div class="mc17-card-sheen"></div>
+    <div class="mc17-card-top"><div><small>ANGOLA</small><b>Meu<span>Capital</span></b></div><strong>${issuer}</strong></div>
+    <div class="mc17-card-middle"><div class="mc17-chip"><i></i><i></i><i></i><i></i></div><div class="mc17-contactless">)))</div></div>
+    <div class="mc17-card-number">•••• &nbsp; •••• &nbsp; •••• &nbsp; ${last4}</div>
+    <div class="mc17-card-bottom"><div><small>TITULAR</small><b>${name}</b></div><div><small>TIPO</small><b>${type}</b></div></div>
+  </div>`;
+}
+
 function renderDashboard(){
-  const b=calcBudget(); $("salaryCard").textContent=money(b.salary);$("expenseCard").textContent=money(b.expenses);$("savingCard").textContent=money(b.saving);$("leftCard").textContent=money(b.left);
+  const b=calcBudget();
+  renderDashboardCard(); $("salaryCard").textContent=money(b.salary);$("expenseCard").textContent=money(b.expenses);$("savingCard").textContent=money(b.saving);$("leftCard").textContent=money(b.left);
   $("savedCard").textContent=money(state.history.length?Math.max(...state.history.map(x=>+x.total||0)):b.saving);
   $("savingPctCard").textContent=b.pct.toFixed(0)+"% do salário";$("leftPctCard").textContent=(b.salary?b.left/b.salary*100:0).toFixed(0)+"% do salário";
   ["salary","fixed","variable","debt","saving"].forEach(k=>setVal(k,b[k]));
@@ -464,7 +490,7 @@ function renderCards(){
 async function deleteCard(i){
   if(!confirm("Remover este cartão do MeuCapital?"))return;
   const card=state.cards[i];
-  state.cards.splice(i,1); save(); renderCards();
+  state.cards.splice(i,1); save(); renderCards(); renderDashboard();
   try{await deleteCardFromCloud(card?.id);setCloudStatus("Cartão removido e sincronizado ✓","ok");toast("Cartão removido.");}
   catch(err){console.error(err);toast("Foi removido no ecrã, mas não foi possível sincronizar.");setCloudStatus("Erro de sincronização","error");}
 }
@@ -692,12 +718,12 @@ $("addCard").onclick=async()=>{
   const card={name,issuer:info.label,last4,type};
   try{
     const saved=await addCardToCloud(card);
-    state.cards=state.cards||[]; state.cards.unshift(saved||card); save(); renderCards();
+    state.cards=state.cards||[]; state.cards.unshift(saved||card); save(); renderCards(); renderDashboard();
     $("cardName").value="";$("cardBin").value="";$("cardIssuer").value="";$("cardLast4").value=""; updateCardBank();
     setCloudStatus("Cartão sincronizado com a tua conta ✓","ok");toast(`${info.known?info.bank:"Cartão identificado"} e cartão adicionado com segurança.`);
   }catch(err){
     console.error(err);
-    state.cards=state.cards||[];state.cards.unshift(card);save();renderCards();
+    state.cards=state.cards||[];state.cards.unshift(card);save();renderCards();renderDashboard();
     setCloudStatus("Não foi possível sincronizar o cartão.","error");toast("Cartão guardado localmente. Verifica a configuração da base de dados.");
   }finally{buttonBusy(btn,false);}
 };

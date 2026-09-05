@@ -361,31 +361,38 @@ function calcBudget(b=state.budget){
   const expenses=fixed+variable+debt,left=Math.max(0,salary-expenses-saving),pct=salary?saving/salary*100:0;
   return {salary,fixed,variable,debt,saving,expenses,left,pct};
 }
+function cardVisualMarkup(card, extraClass=""){
+  const issuer=escapeHtml(card?.issuer||"Millennium Atlântico");
+  const name=escapeHtml(card?.name||"Cartão Principal");
+  const last4=escapeHtml(card?.last4||"----");
+  const type=escapeHtml(card?.type||"Débito");
+  const isAtlantic=String(card?.issuer||"").toLowerCase().includes("atlântico")||String(card?.issuer||"").toLowerCase().includes("atlantico");
+  const theme=isAtlantic?"theme-atlantico":cardTheme(card?.issuer||"");
+  return `<div class="mc-atl-card ${theme} ${extraClass}" aria-label="Cartão ${name}">
+    <div class="mc-atl-wave mc-atl-wave-a"></div><div class="mc-atl-wave mc-atl-wave-b"></div><div class="mc-atl-glow"></div>
+    <div class="mc-atl-top">
+      <div class="mc-atl-brand"><span>ANGOLA</span><b>🇦🇴</b><strong>Meu<span>Capital</span></strong><em>PRIVATE FINANCE</em></div>
+      <div class="mc-atl-issuer"><i>Μ</i><span>${issuer}</span></div>
+    </div>
+    <div class="mc-atl-mid">
+      <div class="mc-atl-chip"><i></i><i></i><i></i><i></i></div>
+      <div class="mc-atl-contactless">)))</div>
+    </div>
+    <div class="mc-atl-number"><b>••••</b><b>••••</b><b>••••</b><strong>${last4}</strong></div>
+    <div class="mc-atl-network"><small>MULTICAIXA</small><div class="mc-atl-maestro"><b></b><b></b></div><span>maestro.</span></div>
+    <div class="mc-atl-bottom"><div><small>TITULAR</small><b>${name}</b></div><div><small>TIPO</small><b>${type}</b></div></div>
+  </div>`;
+}
 function renderDashboardCard(){
   const slot=$("mc17CardSlot");
   if(!slot)return;
   const card=(state.cards||[])[0];
   if(!card){
-    slot.innerHTML=`<div class="mc17-bank-card mc17-card-empty" aria-label="Adicionar cartão">
-      <div class="mc17-card-top"><b>Meu<span>Capital</span></b><span>WALLET</span></div>
-      <div class="mc17-card-empty-title">Adiciona o teu primeiro cartão</div>
-      <div class="mc17-card-empty-hint">Os dados sensíveis nunca são pedidos.</div>
-    </div>`;
+    slot.innerHTML=`<div class="mc17-bank-card mc17-card-empty" aria-label="Adicionar cartão"><div class="mc17-card-top"><b>Meu<span>Capital</span></b><span>WALLET</span></div><div class="mc17-card-empty-title">Adiciona o teu primeiro cartão</div><div class="mc17-card-empty-hint">Os dados sensíveis nunca são pedidos.</div></div>`;
     return;
   }
-  const issuer=escapeHtml(card.issuer||"Emissor não confirmado");
-  const name=escapeHtml(card.name||"Cartão principal");
-  const last4=escapeHtml(card.last4||"----");
-  const type=escapeHtml(card.type||"Débito");
-  slot.innerHTML=`<div class="mc17-bank-card mc17-real-card ${cardTheme(card.issuer||"")}" aria-label="Cartão ${name}">
-    <div class="mc17-card-sheen"></div>
-    <div class="mc17-card-top"><div><small>ANGOLA</small><b>Meu<span>Capital</span></b></div><strong>${issuer}</strong></div>
-    <div class="mc17-card-middle"><div class="mc17-chip"><i></i><i></i><i></i><i></i></div><div class="mc17-contactless">)))</div></div>
-    <div class="mc17-card-number">•••• &nbsp; •••• &nbsp; •••• &nbsp; ${last4}</div>
-    <div class="mc17-card-bottom"><div><small>TITULAR</small><b>${name}</b></div><div><small>TIPO</small><b>${type}</b></div></div>
-  </div>`;
+  slot.innerHTML=cardVisualMarkup(card,"mc-atl-dashboard");
 }
-
 function renderDashboard(){
   const b=calcBudget();
   renderDashboardCard(); $("salaryCard").textContent=money(b.salary);$("expenseCard").textContent=money(b.expenses);$("savingCard").textContent=money(b.saving);$("leftCard").textContent=money(b.left);
@@ -474,15 +481,7 @@ function renderCards(){
     const type=(c.type||"Débito").toUpperCase();
     const last4=escapeHtml(c.last4||"----");
     const name=escapeHtml(c.name||"Cartão");
-    return `<div class="wallet-card-shell">
-      <div class="mc-bank-card mc-card-real ${cardTheme(issuer)}">
-        <div class="mc-card-glow"></div>
-        <div class="mc-card-header"><span class="mc-card-country">ANGOLA • KZ</span><strong>Meu<span>Capital</span></strong></div>
-        <div class="mc-card-middle"><div class="mc-card-chip"><i></i><i></i><i></i><i></i></div><div class="mc-card-contactless">⌁</div></div>
-        <div class="mc-card-number">•••• &nbsp; •••• &nbsp; •••• &nbsp; ${last4}</div>
-        <div class="mc-card-footer"><div><small>TITULAR</small><b>${name}</b></div><div><small>TIPO</small><b>${escapeHtml(type)}</b></div><div><small>EMISSOR</small><b>${escapeHtml(issuer)}</b></div></div>
-      </div>
-      <div class="wallet-card-meta"><div><b>${name}</b><p>${escapeHtml(issuer)} · ${escapeHtml(c.type||"Débito")} · final ${last4}</p></div><button class="danger-btn" onclick="deleteCard(${i})">Remover</button></div>
+    return `<div class="wallet-card-shell">${cardVisualMarkup(c,"mc-atl-list")}<div class="wallet-card-meta"><div><b>${name}</b><p>${escapeHtml(issuer)} · ${escapeHtml(c.type||"Débito")} · final ${last4}</p></div><button class="danger-btn" onclick="deleteCard(${i})">Remover</button></div>
     </div>`;
   }).join(""):"<div class='empty-state'>Ainda não tens cartões registados.</div>";
   $("transactionsList").innerHTML=tx.length?tx.slice(0,12).map((t,i)=>`<div class="item-card transaction-card"><div><b>${escapeHtml(t.desc||t.description)}</b><p>${escapeHtml(t.category||"Outro")} · ${escapeHtml(t.date||t.occurred_at||"")}</p></div><strong class="${t.type==='Entrada'?'tx-in':'tx-out'}">${t.type==='Entrada'?'+':'-'}${money(t.amount)}</strong><button class="danger-btn" onclick="deleteTransaction(${i})">×</button></div>`).join(""):"<div class='empty-state'>Ainda não existem movimentos.</div>";

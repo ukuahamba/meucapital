@@ -508,7 +508,7 @@ async function loadBankingFoundation(){
   if(!currentUser)return;
   try{
     const [c,a,t]=await Promise.all([
-      supabaseClient.from("bank_connections").select("id,bank_name,provider,status,consent_status,external_connection_id,connected_at,last_synced_at,created_at,updated_at,consent_scopes,consent_granted_at,consent_expires_at,last_error").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
+      supabaseClient.from("bank_connections").select("id,bank_name,provider,status,consent_status,external_connection_id,connected_at,last_synced_at,created_at,updated_at,consent_scopes,consent_granted_at,consent_expires_at,last_error,account_holder_name,account_label,account_type,currency,masked_account,details_completed_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
       supabaseClient.from("bank_accounts").select("id,connection_id,name,account_type,currency,masked_identifier,balance,available_balance,last_synced_at,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
       supabaseClient.from("bank_transactions").select("id,account_id,description,amount,direction,currency,occurred_at,category").eq("user_id",currentUser.id).order("occurred_at",{ascending:false}).limit(50)
     ]);
@@ -537,7 +537,9 @@ function renderAccounts(){
     const related=accounts.filter(a=>a.connection_id===c.id);
     const status=bankConnectionStatusLabel(c);
     const consent=c.consent_status==="granted"?"Consentimento autorizado":c.consent_status==="revoked"?"Consentimento revogado":"A aguardar autorização do provedor";
-    return `<div class="item-card linked-account-card"><div class="linked-account-icon">${escapeHtml((c.bank_name||"B").slice(0,1))}</div><div class="linked-account-main"><b>${escapeHtml(c.bank_name)}</b><p>${related.length?`${related.length} conta(s) recebida(s)`:'Nenhuma conta recebida ainda'} · ${escapeHtml(consent)}</p></div><span class="linked-account-state state-${c.status||'pending'}">${status}</span><button class="danger-btn" onclick="disconnectBank(${JSON.stringify(c.id)})">Desligar</button></div>`;
+    const detailsDone=!!c.details_completed_at;
+    const action=detailsDone?"":`<button class="secondary-btn linked-account-action" onclick="resumeBankConnection(${JSON.stringify(c.id)})">Completar dados</button>`;
+    return `<div class="item-card linked-account-card"><div class="linked-account-icon">${escapeHtml((c.bank_name||"B").slice(0,1))}</div><div class="linked-account-main"><b>${escapeHtml(c.bank_name)}</b><p>${related.length?`${related.length} conta(s) recebida(s)`:'Nenhuma conta recebida ainda'} · ${escapeHtml(consent)}${c.account_label?` · ${escapeHtml(c.account_label)}`:''}</p></div><span class="linked-account-state state-${c.status||'pending'}">${status}</span>${action}<button class="danger-btn" onclick="disconnectBank(${JSON.stringify(c.id)})">Desligar</button></div>`;
   }).join(""):"<div class='empty-state'>Ainda não tens conexões bancárias. Escolhe o teu banco acima.</div>";
   accountsList.innerHTML=accounts.length?accounts.map(a=>`<div class="item-card bank-real-account"><div class="bank-account-leading"><div class="linked-account-icon">Kz</div><div><b>${escapeHtml(a.name||"Conta bancária")}</b><p>${escapeHtml(a.account_type||"Conta")} · ${escapeHtml(a.currency||"AOA")} · ${escapeHtml(a.masked_identifier||"identificador protegido")}</p></div></div><strong>${a.balance==null?"—":money(a.balance)}</strong></div>`).join(""):"<div class='empty-state'>O saldo aparecerá aqui depois de uma autorização bancária real e de uma sincronização concluída.</div>";
   txList.innerHTML=txs.length?txs.slice(0,20).map(t=>`<div class="item-card transaction-card"><div><b>${escapeHtml(t.description||"Movimento bancário")}</b><p>${escapeHtml(t.category||"Não categorizado")} · ${escapeHtml(t.occurred_at||"")} · ${escapeHtml(t.currency||"AOA")}</p></div><strong class="${t.direction==='credit'?'tx-in':'tx-out'}">${t.direction==='credit'?'+':'-'}${money(t.amount)}</strong></div>`).join(""):"<div class='empty-state'>Os movimentos reais aparecerão aqui quando o banco/provedor os disponibilizar.</div>";
@@ -777,28 +779,89 @@ $("cardLast4")?.addEventListener("input",()=>{$("cardLast4").value=String($("car
 $("cardBin")?.addEventListener("input",()=>{$("cardBin").value=String($("cardBin").value||"").replace(/\D/g,"").slice(0,6)});
 
 
+function openBankPicker(){
+  const modal=$("bankPickerModal");
+  if(!modal)return;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden","false");
+  document.body.classList.add("modal-open");
+}
+function closeBankPicker(){
+  const modal=$("bankPickerModal");
+  if(!modal)return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden","true");
+  document.body.classList.remove("modal-open");
+}
 function selectBankForConnection(bank){
   const select=$("bankConnectionSelect"); if(select)select.value=bank||"";
-  document.querySelectorAll(".bank-option").forEach(b=>b.classList.toggle("selected",b.dataset.bank===bank));
-  const status=$("bankConnectionStatus"); if(status)status.textContent=bank?`${bank} selecionado. O próximo passo é a autorização no banco/provedor.`:"Seleciona o teu banco para continuar.";
+  document.querySelectorAll(".bank-modal-option").forEach(b=>b.classList.toggle("selected",b.dataset.bank===bank));
+  const label=$("selectedBankLabel"); if(label)label.textContent=bank||"Nenhum banco selecionado";
+  const status=$("bankConnectionStatus"); if(status)status.textContent=bank?`${bank} selecionado. Continua para identificar a conta.`:"Seleciona o teu banco para continuar.";
+  if(bank){
+    const box=$("bankDetailsBox"); if(box)box.classList.remove("hidden");
+  }
+  closeBankPicker();
 }
-document.querySelectorAll(".bank-option").forEach(btn=>btn.addEventListener("click",()=>selectBankForConnection(btn.dataset.bank)));
+$("openBankPickerBtn")?.addEventListener("click",openBankPicker);
+document.querySelectorAll("[data-close-bank-modal]").forEach(el=>el.addEventListener("click",closeBankPicker));
+document.querySelectorAll(".bank-modal-option").forEach(btn=>btn.addEventListener("click",()=>selectBankForConnection(btn.dataset.bank)));
 $("bankConnectionSelect")?.addEventListener("change",()=>selectBankForConnection($("bankConnectionSelect").value||""));
 $("connectBankBtn")?.addEventListener("click",async()=>{
   const bank=$("bankConnectionSelect").value||"";
-  if(!bank){toast("Escolhe primeiro o teu banco.");return;}
-  const btn=$("connectBankBtn"); buttonBusy(btn,true,"A preparar autorização...");
-  const status=$("bankConnectionStatus");
+  if(!bank){toast("Toca em + Adicionar banco e escolhe o teu banco.");openBankPicker();return;}
+  const box=$("bankDetailsBox"); if(box)box.classList.remove("hidden");
+  const status=$("bankConnectionStatus"); if(status)status.textContent=`${bank}: agora podes indicar os dados de identificação da conta.`;
+  box?.scrollIntoView({behavior:"smooth",block:"center"});
+});
+
+async function saveBankDetails(){
+  const bank=$("bankConnectionSelect")?.value||"";
+  const holder=$("bankAccountHolder")?.value.trim()||"";
+  const label=$("bankAccountLabel")?.value.trim()||"Conta principal";
+  const accountType=$("bankAccountType")?.value||"Conta à ordem";
+  const currency=$("bankAccountCurrency")?.value||"AOA";
+  const masked=$("bankMaskedAccount")?.value.trim()||"";
+  const status=$("bankDetailsStatus");
+  if(!bank){openBankPicker();toast("Escolhe primeiro o banco.");return;}
+  if(!holder){if(status)status.textContent="Indica o titular da conta.";toast("Falta o titular da conta.");return;}
+  if(masked && masked.replace(/[^0-9]/g,"").length>4){if(status)status.textContent="Usa apenas uma referência mascarada com no máximo 4 dígitos.";toast("O identificador deve ficar mascarado.");return;}
+  const btn=$("saveBankDetailsBtn"); buttonBusy(btn,true,"A guardar…");
   try{
     if(!currentUser)throw new Error("AUTH");
-    const {data,error}=await supabaseClient.from("bank_connections").insert({user_id:currentUser.id,bank_name:bank,provider:"pending_provider",status:"pending",consent_status:"pending"}).select("id,bank_name,provider,status,consent_status,created_at,updated_at").single();
+    const existing=(state.bankConnections||[]).find(c=>c.bank_name===bank && c.status!=="disconnected" && !c.details_completed_at);
+    let connectionId=existing?.id;
+    if(!connectionId){
+      const {data,error}=await supabaseClient.from("bank_connections").insert({user_id:currentUser.id,bank_name:bank,provider:"pending_provider",status:"pending",consent_status:"pending"}).select("id,bank_name,provider,status,consent_status,created_at,updated_at").single();
+      if(error)throw error;
+      connectionId=data.id;
+    }
+    const payload={account_holder_name:holder,account_label:label,account_type:accountType,currency,masked_account:masked||null,details_completed_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+    const {error}=await supabaseClient.from("bank_connections").update(payload).eq("id",connectionId).eq("user_id",currentUser.id);
     if(error)throw error;
-    state.bankConnections=[data,...(state.bankConnections||[])]; save(); renderAccounts();
-    if(status)status.textContent=`${bank}: pedido de autorização preparado. A ligação ao banco só será concluída quando existir um conector autorizado.`;
-    toast("Pedido de ligação preparado.");
-  }catch(err){console.error(err);if(status)status.textContent=err.message==="AUTH"?"Inicia sessão para preparar a ligação.":"Não foi possível preparar a ligação. Confirma o SQL da V26 no Supabase.";toast("Não foi possível preparar a ligação.");}
+    if(status)status.textContent=`${bank}: dados guardados. A autorização bancária real continua a depender de um conector autorizado.`;
+    toast("Dados da conta guardados com segurança.");
+    await loadBankingFoundation();
+  }catch(err){console.error(err);if(status)status.textContent=err.message==="AUTH"?"Inicia sessão para continuar.":"Não foi possível guardar os dados.";toast("Não foi possível guardar os dados.");}
   finally{buttonBusy(btn,false);}
+}
+$("saveBankDetailsBtn")?.addEventListener("click",saveBankDetails);
+$("bankMaskedAccount")?.addEventListener("input",()=>{
+  const el=$("bankMaskedAccount"); if(!el)return;
+  const digits=String(el.value||"").replace(/[^0-9]/g,"").slice(-4);
+  el.value=digits?`•••• ${digits}`:"";
 });
+function resumeBankConnection(id){
+  const c=(state.bankConnections||[]).find(x=>x.id===id);
+  if(!c)return;
+  selectBankForConnection(c.bank_name||"");
+  if($("bankAccountHolder"))$("bankAccountHolder").value=c.account_holder_name||state.userName||"";
+  if($("bankAccountLabel"))$("bankAccountLabel").value=c.account_label||"Conta principal";
+  if($("bankAccountType"))$("bankAccountType").value=c.account_type||"Conta à ordem";
+  if($("bankAccountCurrency"))$("bankAccountCurrency").value=c.currency||"AOA";
+  if($("bankMaskedAccount"))$("bankMaskedAccount").value=c.masked_account||"";
+  $("bankDetailsBox")?.scrollIntoView({behavior:"smooth",block:"center"});
+}
 
 $("addCard").onclick=async()=>{
   const btn=$("addCard");

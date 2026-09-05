@@ -508,7 +508,7 @@ async function loadBankingFoundation(){
   if(!currentUser)return;
   try{
     const [c,a,t]=await Promise.all([
-      supabaseClient.from("bank_connections").select("id,bank_name,provider,status,consent_status,external_connection_id,connected_at,last_synced_at,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
+      supabaseClient.from("bank_connections").select("id,bank_name,provider,status,consent_status,external_connection_id,connected_at,last_synced_at,created_at,updated_at,consent_scopes,consent_granted_at,consent_expires_at,last_error").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
       supabaseClient.from("bank_accounts").select("id,connection_id,name,account_type,currency,masked_identifier,balance,available_balance,last_synced_at,created_at").eq("user_id",currentUser.id).order("created_at",{ascending:false}),
       supabaseClient.from("bank_transactions").select("id,account_id,description,amount,direction,currency,occurred_at,category").eq("user_id",currentUser.id).order("occurred_at",{ascending:false}).limit(50)
     ]);
@@ -518,22 +518,34 @@ async function loadBankingFoundation(){
     save(); renderAccounts();
   }catch(err){console.warn("MeuCapital banking foundation:",err); renderAccounts();}
 }
+function bankConnectionStatusLabel(c){
+  if(c.status==="active"&&c.consent_status==="granted")return "Ativa";
+  if(c.status==="disconnected"||c.consent_status==="revoked")return "Desligada";
+  if(c.status==="error")return "Erro";
+  if(c.consent_status==="pending")return "Autorização pendente";
+  return "Preparada";
+}
 function renderAccounts(){
-  const list=$("linkedAccountsList");
+  const list=$("linkedAccountsList"), accountsList=$("bankAccountsList"), txList=$("bankTransactionsList");
   const connections=Array.isArray(state.bankConnections)?state.bankConnections:[];
   const accounts=Array.isArray(state.bankAccounts)?state.bankAccounts:[];
+  const txs=Array.isArray(state.bankTransactions)?state.bankTransactions:[];
   if(!list)return;
-  const connectionHtml=connections.map(c=>{
+  const activeConnections=connections.filter(c=>c.status!=="disconnected");
+  const countEl=$("bankConnectionCount"); if(countEl)countEl.textContent=`${activeConnections.length} ${activeConnections.length===1?"conexão":"conexões"}`;
+  list.innerHTML=connections.length?connections.map(c=>{
     const related=accounts.filter(a=>a.connection_id===c.id);
-    const status=c.status==="active"?"Ativa":c.status==="pending"?"Preparada":c.status==="disconnected"?"Desligada":"A verificar";
-    return `<div class="item-card linked-account-card"><div class="linked-account-icon">${escapeHtml((c.bank_name||"B").slice(0,1))}</div><div class="linked-account-main"><b>${escapeHtml(c.bank_name)}</b><p>${related.length?`${related.length} conta(s) recebida(s)`:"Aguardando conector bancário autorizado"} · ${escapeHtml(c.consent_status||"not_started")}</p></div><span class="linked-account-state">${status}</span><button class="danger-btn" onclick="disconnectBank(${JSON.stringify(c.id)})">Desligar</button></div>`;
-  }).join("");
-  const accountHtml=accounts.map(a=>`<div class="item-card bank-real-account"><div><b>${escapeHtml(a.name||"Conta bancária")}</b><p>${escapeHtml(a.account_type||"Conta")} · ${escapeHtml(a.currency||"AOA")} · ${escapeHtml(a.masked_identifier||"identificador protegido")}</p></div><strong>${a.balance==null?"—":money(a.balance)}</strong></div>`).join("");
-  list.innerHTML=connectionHtml||accountHtml||"<div class='empty-state'>Ainda não tens uma conexão bancária preparada. Escolhe o teu banco acima para criar a primeira conexão segura.</div>";
-  const balanceEl=$("bankLiveBalance"); if(balanceEl){const total=accounts.reduce((n,a)=>n+Number(a.balance||0),0); balanceEl.textContent=accounts.length?money(total):"— Kz";}
-  const txEl=$("bankLiveTransactions"); if(txEl)txEl.textContent=String((state.bankTransactions||[]).length||"—");
-  const syncEl=$("bankLiveSync"); if(syncEl)syncEl.textContent=connections.some(c=>c.last_synced_at)?new Date(Math.max(...connections.filter(c=>c.last_synced_at).map(c=>new Date(c.last_synced_at).getTime()))).toLocaleString("pt-AO") : "—";
+    const status=bankConnectionStatusLabel(c);
+    const consent=c.consent_status==="granted"?"Consentimento autorizado":c.consent_status==="revoked"?"Consentimento revogado":"A aguardar autorização do provedor";
+    return `<div class="item-card linked-account-card"><div class="linked-account-icon">${escapeHtml((c.bank_name||"B").slice(0,1))}</div><div class="linked-account-main"><b>${escapeHtml(c.bank_name)}</b><p>${related.length?`${related.length} conta(s) recebida(s)`:'Nenhuma conta recebida ainda'} · ${escapeHtml(consent)}</p></div><span class="linked-account-state state-${c.status||'pending'}">${status}</span><button class="danger-btn" onclick="disconnectBank(${JSON.stringify(c.id)})">Desligar</button></div>`;
+  }).join(""):"<div class='empty-state'>Ainda não tens conexões bancárias. Escolhe o teu banco acima.</div>";
+  accountsList.innerHTML=accounts.length?accounts.map(a=>`<div class="item-card bank-real-account"><div class="bank-account-leading"><div class="linked-account-icon">Kz</div><div><b>${escapeHtml(a.name||"Conta bancária")}</b><p>${escapeHtml(a.account_type||"Conta")} · ${escapeHtml(a.currency||"AOA")} · ${escapeHtml(a.masked_identifier||"identificador protegido")}</p></div></div><strong>${a.balance==null?"—":money(a.balance)}</strong></div>`).join(""):"<div class='empty-state'>O saldo aparecerá aqui depois de uma autorização bancária real e de uma sincronização concluída.</div>";
+  txList.innerHTML=txs.length?txs.slice(0,20).map(t=>`<div class="item-card transaction-card"><div><b>${escapeHtml(t.description||"Movimento bancário")}</b><p>${escapeHtml(t.category||"Não categorizado")} · ${escapeHtml(t.occurred_at||"")} · ${escapeHtml(t.currency||"AOA")}</p></div><strong class="${t.direction==='credit'?'tx-in':'tx-out'}">${t.direction==='credit'?'+':'-'}${money(t.amount)}</strong></div>`).join(""):"<div class='empty-state'>Os movimentos reais aparecerão aqui quando o banco/provedor os disponibilizar.</div>";
+  const balanceEl=$("bankLiveBalance"); if(balanceEl){const total=accounts.reduce((n,a)=>n+Number(a.balance||0),0);balanceEl.textContent=accounts.length?money(total):"— Kz";}
+  const txEl=$("bankLiveTransactions"); if(txEl)txEl.textContent=txs.length?String(txs.length):"—";
+  const syncEl=$("bankLiveSync"); if(syncEl){const times=connections.filter(c=>c.last_synced_at).map(c=>new Date(c.last_synced_at).getTime()).filter(Number.isFinite);syncEl.textContent=times.length?new Date(Math.max(...times)).toLocaleString("pt-AO"):"—";}
 }
+
 async function disconnectBank(id){
   if(!currentUser||!id)return;
   if(!confirm("Desligar esta conexão bancária?"))return;
@@ -765,25 +777,26 @@ $("cardLast4")?.addEventListener("input",()=>{$("cardLast4").value=String($("car
 $("cardBin")?.addEventListener("input",()=>{$("cardBin").value=String($("cardBin").value||"").replace(/\D/g,"").slice(0,6)});
 
 
-$("bankConnectionSelect")?.addEventListener("change",()=>{
-  const bank=$("bankConnectionSelect").value||"";
-  const status=$("bankConnectionStatus");
-  if(status)status.textContent=bank?`Banco selecionado: ${bank}. A autenticação real será feita pelo banco/parceiro quando a integração estiver disponível.`:"Ainda não existe uma ligação bancária real configurada.";
-});
+function selectBankForConnection(bank){
+  const select=$("bankConnectionSelect"); if(select)select.value=bank||"";
+  document.querySelectorAll(".bank-option").forEach(b=>b.classList.toggle("selected",b.dataset.bank===bank));
+  const status=$("bankConnectionStatus"); if(status)status.textContent=bank?`${bank} selecionado. O próximo passo é a autorização no banco/provedor.`:"Seleciona o teu banco para continuar.";
+}
+document.querySelectorAll(".bank-option").forEach(btn=>btn.addEventListener("click",()=>selectBankForConnection(btn.dataset.bank)));
+$("bankConnectionSelect")?.addEventListener("change",()=>selectBankForConnection($("bankConnectionSelect").value||""));
 $("connectBankBtn")?.addEventListener("click",async()=>{
   const bank=$("bankConnectionSelect").value||"";
   if(!bank){toast("Escolhe primeiro o teu banco.");return;}
-  const btn=$("connectBankBtn"); buttonBusy(btn,true,"A preparar...");
+  const btn=$("connectBankBtn"); buttonBusy(btn,true,"A preparar autorização...");
   const status=$("bankConnectionStatus");
   try{
     if(!currentUser)throw new Error("AUTH");
-    const {data,error}=await supabaseClient.from("bank_connections").insert({user_id:currentUser.id,bank_name:bank,provider:"pending_provider",status:"pending",consent_status:"not_started"}).select("id,bank_name,provider,status,consent_status,created_at").single();
+    const {data,error}=await supabaseClient.from("bank_connections").insert({user_id:currentUser.id,bank_name:bank,provider:"pending_provider",status:"pending",consent_status:"pending"}).select("id,bank_name,provider,status,consent_status,created_at,updated_at").single();
     if(error)throw error;
-    state.bankConnections=[data,...(state.bankConnections||[])];
-    state.linkedAccounts=[{id:data.id,bank:data.bank_name,name:"Ligação bancária",status:"Pendente",statusLabel:"A aguardar conector autorizado"},...(state.linkedAccounts||[])]; save(); renderAccounts();
-    if(status)status.textContent=`${bank}: conexão criada com segurança. O próximo passo é o conector autorizado do banco/provedor.`;
-    toast("Conexão preparada com segurança.");
-  }catch(err){console.error(err);if(status)status.textContent=err.message==="AUTH"?"Inicia sessão para preparar a ligação.":"Não foi possível guardar a preparação da ligação. Executa o SQL da V25 no Supabase.";toast("Não foi possível preparar a ligação.");}
+    state.bankConnections=[data,...(state.bankConnections||[])]; save(); renderAccounts();
+    if(status)status.textContent=`${bank}: pedido de autorização preparado. A ligação ao banco só será concluída quando existir um conector autorizado.`;
+    toast("Pedido de ligação preparado.");
+  }catch(err){console.error(err);if(status)status.textContent=err.message==="AUTH"?"Inicia sessão para preparar a ligação.":"Não foi possível preparar a ligação. Confirma o SQL da V26 no Supabase.";toast("Não foi possível preparar a ligação.");}
   finally{buttonBusy(btn,false);}
 });
 

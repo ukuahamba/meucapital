@@ -115,6 +115,7 @@
     <button class="nav-item" data-page="calculator"><span class="nav-icon">▦</span><span>Planeamento</span></button>
     <button class="nav-item" data-page="goals"><span class="nav-icon">◎</span><span>Metas</span></button>
     <button class="nav-item" data-page="cards"><span class="nav-icon">▭</span><span>Cartões</span></button>
+    <button class="nav-item" data-page="accounts"><span class="nav-icon">⌁</span><span>Contas bancárias</span></button>
     <button class="nav-item" data-page="investments"><span class="nav-icon">↗</span><span>Investimentos</span></button>
     <button class="nav-item" data-page="history"><span class="nav-icon">◷</span><span>Histórico</span></button>
     <button class="nav-item" data-page="reports"><span class="nav-icon">▤</span><span>Relatórios</span></button>
@@ -328,6 +329,15 @@
   <div class="grid-2"><article class="panel"><div class="section-heading"><div><div class="panel-kicker">CARTEIRA</div><h2>Os meus cartões</h2></div></div><div id="cardsList" class="cards-list"></div></article><article class="panel"><div class="section-heading"><div><div class="panel-kicker">ATIVIDADE</div><h2>Movimentos recentes</h2></div></div><div id="transactionsList" class="cards-list"></div></article></div>
 </section>
 
+<section class="page hidden" id="page-accounts">
+  <div class="page-head"><div><span class="eyebrow">OPEN BANKING</span><h1>Contas bancárias</h1><p>Liga as tuas contas ao MeuCapital através de uma ligação bancária autorizada.</p></div></div>
+  <div class="security-banner"><div><strong>Ligação segura</strong><p>O MeuCapital nunca deve pedir o PIN, CVV ou palavra-passe do teu banco. A autenticação deve acontecer no banco ou num parceiro autorizado.</p></div><span>🔐</span></div>
+  <div class="openbanking-hero panel"><div><div class="panel-kicker">PRÓXIMA GERAÇÃO DA CARTEIRA</div><h2>Uma visão única das tuas contas</h2><p class="muted">Esta área já está preparada para receber saldos e movimentos bancários reais. A ligação real depende da disponibilidade de uma API Open Banking autorizada para o banco escolhido.</p></div><div class="openbanking-status"><span></span><b>Preparado para integração</b><small>Sem credenciais bancárias armazenadas</small></div></div>
+  <div class="grid-2"><article class="panel"><div class="section-heading"><div><div class="panel-kicker">NOVA LIGAÇÃO</div><h2>Ligar conta bancária</h2></div></div><p class="muted">Escolhe o banco. Na integração real, o próximo passo será feito no ambiente seguro do banco/parceiro.</p><div class="big-form"><div><label>Banco</label><select id="bankConnectionSelect"><option value="">Seleciona o teu banco</option><option>BAI</option><option>BFA</option><option>BIC</option><option>BPC</option><option>BNI</option><option>Banco Sol</option><option>Banco Económico</option><option>Banco Millennium Atlântico</option><option>Standard Bank Angola</option><option>Access Bank Angola</option><option>Banco Keve</option><option>Banco Yetu</option><option>Banco Valor</option><option>BCGA</option><option>BCI</option><option>Outro banco</option></select></div></div><button class="calculate" id="connectBankBtn">Ligar conta com segurança</button><small class="field-status" id="bankConnectionStatus">Ainda não existe uma ligação bancária real configurada.</small></article>
+  <article class="panel"><div class="section-heading"><div><div class="panel-kicker">DADOS QUE QUEREMOS RECEBER</div><h2>Saldo e movimentos</h2></div></div><div class="account-data-preview"><div><span>Saldo</span><strong>— Kz</strong><small>Aguardando ligação</small></div><div><span>Movimentos</span><strong>—</strong><small>Aguardando ligação</small></div><div><span>Última sincronização</span><strong>—</strong><small>Sem conta ligada</small></div></div><p class="muted">Quando houver uma conexão autorizada, esta área passa a mostrar os dados que o provedor permitir.</p></article></div>
+  <div class="panel"><div class="section-heading"><div><div class="panel-kicker">CONTAS LIGADAS</div><h2>As minhas contas</h2></div></div><div id="linkedAccountsList" class="cards-list"></div></div>
+</section>
+
 <section class="page hidden" id="page-investments"><div class="page-head"><div><h1>Investimentos</h1><p>Acompanha o dinheiro que estás a investir.</p></div></div><div class="panel"><div class="big-form"><div><label>Nome</label><input id="invName" placeholder="Ex.: Depósito a prazo"></div><div><label>Valor investido</label><input id="invAmount" type="number" min="0"></div><div><label>Rendimento anual (%)</label><input id="invRate" type="number" step="0.1"></div></div><button class="calculate" id="addInvestment">Adicionar investimento</button><div id="investmentsList" class="cards-list"></div></div></section>
 
 <section class="page hidden" id="page-history"><div class="page-head"><div><h1>Histórico financeiro</h1><p>Registos guardados dos teus meses.</p></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Salário</th><th>Despesas</th><th>Poupança</th><th>Sobra</th><th>Total guardado</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
@@ -402,7 +412,7 @@ window.addEventListener("error", function(e){
 }, true);
 </script>
 
-<script src="script.js?v=22.6"></script>
+<script src="script.js?v=24.0"></script>
 
 <nav class="mc17-bottom-nav" aria-label="Navegação principal móvel">
   <button class="active" data-page="dashboard"><span>⌂</span><small>Início</small></button>

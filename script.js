@@ -266,7 +266,8 @@ const defaults={
   history:[],
   goals:[],
   cards:[],
-  transactions:[]
+  transactions:[],
+  linkedAccounts:[]
 };
 let state=JSON.parse(localStorage.getItem(KEY)||"null")||structuredClone(defaults);
 function save(){if(currentUser) localStorage.setItem(KEY,JSON.stringify(state))}
@@ -499,6 +500,13 @@ async function deleteTransaction(i){
   try{await deleteTransactionFromCloud(tx?.id);setCloudStatus("Movimento removido e sincronizado ✓","ok");toast("Movimento removido.");}
   catch(err){console.error(err);toast("Foi removido no ecrã, mas não foi possível sincronizar.");setCloudStatus("Erro de sincronização","error");}
 }
+function renderAccounts(){
+  const list=$("linkedAccountsList");
+  const accounts=Array.isArray(state.linkedAccounts)?state.linkedAccounts:[];
+  if(!list)return;
+  list.innerHTML=accounts.length?accounts.map(a=>`<div class="item-card linked-account-card"><div class="linked-account-icon">${escapeHtml((a.bank||"B").slice(0,1))}</div><div class="linked-account-main"><b>${escapeHtml(a.bank||"Banco")}</b><p>${escapeHtml(a.name||"Conta bancária")} · ${escapeHtml(a.statusLabel||"Ligação em preparação")}</p></div><span class="linked-account-state">${escapeHtml(a.status||"Pendente")}</span></div>`).join(""):"<div class='empty-state'>Ainda não tens contas bancárias ligadas. Quando uma integração autorizada estiver disponível, elas aparecerão aqui.</div>";
+}
+
 function navigate(page){
   const target=$("page-"+page);
   if(!target)return;
@@ -508,6 +516,7 @@ function navigate(page){
   $("sidebar")?.classList.remove("open");
   if(page==="calculator")renderCalculator();
   if(page==="cards")renderCards();
+  if(page==="accounts")renderAccounts();
   if(page==="goals")renderGoals();
   if(page==="investments")renderInvestments();
   if(page==="history")renderHistory();
@@ -717,6 +726,20 @@ $("cardBankSelect")?.addEventListener("change",()=>{
 });
 $("cardLast4")?.addEventListener("input",()=>{$("cardLast4").value=String($("cardLast4").value||"").replace(/\D/g,"").slice(0,4)});
 $("cardBin")?.addEventListener("input",()=>{$("cardBin").value=String($("cardBin").value||"").replace(/\D/g,"").slice(0,6)});
+
+
+$("bankConnectionSelect")?.addEventListener("change",()=>{
+  const bank=$("bankConnectionSelect").value||"";
+  const status=$("bankConnectionStatus");
+  if(status)status.textContent=bank?`Banco selecionado: ${bank}. A autenticação real será feita pelo banco/parceiro quando a integração estiver disponível.`:"Ainda não existe uma ligação bancária real configurada.";
+});
+$("connectBankBtn")?.addEventListener("click",()=>{
+  const bank=$("bankConnectionSelect").value||"";
+  if(!bank){toast("Escolhe primeiro o teu banco.");return;}
+  toast("A ligação segura será ativada quando o conector Open Banking estiver configurado.");
+  const status=$("bankConnectionStatus");
+  if(status)status.textContent=`${bank}: preparado para ligação Open Banking. Nenhuma palavra-passe ou PIN foi pedido.`;
+});
 
 $("addCard").onclick=async()=>{
   const btn=$("addCard");

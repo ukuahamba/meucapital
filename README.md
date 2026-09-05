@@ -1,4 +1,4 @@
-# MeuCapital V21 — Reconhecimento de Bancos Angola
+# MeuCapital V22.1 corrigida — Reconhecimento de Bancos Angola
 
 Carteira e movimentos com sincronização por conta no Supabase e reconhecimento local de BIN/IIN.
 
@@ -19,4 +19,16 @@ Carteira e movimentos com sincronização por conta no Supabase e reconhecimento
 4. Abre Cartões e testa um BIN conhecido.
 
 ## Nota de confiança
-As listas públicas de BIN podem estar desatualizadas ou conter lacunas. Por isso, a V21 nunca transforma um BIN desconhecido numa afirmação de banco. A Rede MULTICAIXA processa cartões emitidos pelos bancos participantes, mas isso não significa que o banco emissor possa ser deduzido apenas pelo texto de uma transação.
+As listas públicas de BIN podem estar desatualizadas ou conter lacunas. Por isso, a V22 nunca transforma um BIN desconhecido numa afirmação de banco. A Rede MULTICAIXA processa cartões emitidos pelos bancos participantes, mas isso não significa que o banco emissor possa ser deduzido apenas pelo texto de uma transação.
+
+
+## V22 — cartões visuais
+Os cartões guardados agora aparecem com uma apresentação visual premium inspirada em estética bancária angolana. O BIN não é armazenado e apenas os últimos 4 dígitos são exibidos. Não representa cartões oficiais de qualquer banco.
+
+
+## V22.1 corrigida — Reconhecimento reforçado
+- Base local reforçada para BINs angolanos.
+- Millennium Atlântico: 424590, 424591, 424592, 457286, 457287 e 475179.
+- Quando o emissor não é confirmado, o sistema não inventa um banco.
+- O BIN é usado apenas no navegador e não é guardado.
+- Não requer novo SQL no Supabase.

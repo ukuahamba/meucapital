@@ -416,3 +416,55 @@ button.is-pressed{transform:translateY(1px) scale(.98);filter:brightness(1.16);b
 .theme-orange{background:linear-gradient(135deg,#7e2b0c 0%,#d86719 48%,#351b12 100%)}.theme-blue{background:linear-gradient(135deg,#071a35 0%,#124b83 50%,#09131e 100%)}.theme-gold{background:linear-gradient(135deg,#172217 0%,#5b5421 48%,#111a18 100%)}.theme-red{background:linear-gradient(135deg,#260e12 0%,#7e2027 48%,#151015 100%)}.theme-slate{background:linear-gradient(135deg,#10171d 0%,#3c4b56 48%,#0c1116 100%)}.theme-sand{background:linear-gradient(135deg,#352313 0%,#8b5c24 48%,#17120d 100%)}.theme-deep{background:linear-gradient(135deg,#061820 0%,#0b4c54 48%,#071015 100%)}
 .wallet-card-meta{display:flex;align-items:center;justify-content:space-between;gap:12px}.wallet-card-meta>div{min-width:0}.wallet-card-meta b{font-size:13px}.wallet-card-meta p{margin:3px 0 0;color:#82929c;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wallet-card-meta .danger-btn{flex:none}
 @media(max-width:520px){.mc-card-real{max-width:none;border-radius:19px;padding:17px 18px}.mc-card-middle{margin-top:20px}.mc-card-number{font-size:13px;margin-top:18px}.mc-card-footer{margin-top:13px;gap:8px}.mc-card-footer b{font-size:7px}.mc-card-footer small{font-size:5px}.mc-card-chip{width:38px;height:28px}.wallet-card-meta b{font-size:12px}}
+
+/* V22.3 — acabamento premium do cartão MeuCapital */
+.mc-card-real,.mc17-bank-card{overflow:hidden;isolation:isolate}
+.mc-card-real:before,.mc17-real-card:before{background:linear-gradient(118deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.035) 23%,transparent 43%,rgba(0,0,0,.20) 100%),radial-gradient(circle at 92% 12%,rgba(53,226,148,.18),transparent 30%);}
+.mc-card-real:after,.mc17-real-card:after{width:330px;height:210px;right:-105px;bottom:-125px;border-radius:52%;background:linear-gradient(135deg,rgba(39,224,139,.18),rgba(24,93,86,.04));filter:blur(1px);}
+.mc-card-real .mc-card-glow,.mc17-real-card .mc17-card-sheen{background:radial-gradient(circle,rgba(255,255,255,.16) 0%,rgba(41,229,143,.07) 35%,transparent 70%);filter:blur(3px)}
+.mc-card-real:global{} 
+.mc-card-real .mc-card-country{color:#dce9e4;letter-spacing:.24em}
+.mc-card-real .mc-card-header strong{font-size:15px;letter-spacing:.01em;text-shadow:0 1px 10px rgba(0,0,0,.3)}
+.mc-card-real .mc-card-middle{margin-top:28px}
+.mc-card-real .mc-card-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.42),0 7px 16px rgba(0,0,0,.28);}
+.mc-card-real .mc-card-number{font-size:17px;letter-spacing:.18em;text-shadow:0 2px 7px rgba(0,0,0,.45);font-weight:700}
+.mc-card-real .mc-card-footer b{font-size:8.5px;letter-spacing:.04em}
+.theme-deep{background:radial-gradient(circle at 86% 20%,rgba(31,226,139,.24),transparent 25%),linear-gradient(135deg,#06141b 0%,#073d42 42%,#07151b 72%,#0c3028 100%)}
+.theme-angola{background:radial-gradient(circle at 85% 15%,rgba(32,212,122,.18),transparent 27%),linear-gradient(135deg,#06171b 0%,#0a3a34 45%,#07151b 72%,#102b24 100%)}
+@media(max-width:520px){.mc-card-real .mc-card-number{font-size:13.5px;letter-spacing:.15em}.mc-card-real .mc-card-header strong{font-size:13px}}
+
+/* V22.4 — cartão ultra premium / acabamento bancário sofisticado */
+.mc17-card-slot{perspective:1200px}
+.mc17-real-card{transform:translateZ(0);background:linear-gradient(115deg,#071015 0%,#0b3439 28%,#0a5960 48%,#062c31 68%,#071015 100%);border:1px solid rgba(117,255,208,.72);box-shadow:0 28px 70px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.05) inset,0 0 38px rgba(20,220,150,.10);}
+.mc17-real-card:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.24),transparent 18%,rgba(255,255,255,.025) 35%,transparent 48%,rgba(0,0,0,.26) 100%),repeating-linear-gradient(115deg,transparent 0 18px,rgba(255,255,255,.018) 19px 20px);z-index:-1;mix-blend-mode:screen}
+.mc17-real-card:after{width:390px;height:240px;right:-155px;bottom:-145px;background:radial-gradient(circle at 45% 45%,rgba(64,255,180,.30),rgba(16,91,87,.12) 35%,transparent 70%);filter:blur(2px)}
+.mc17-real-card .mc17-card-sheen{width:340px;height:340px;left:-205px;top:-210px;background:radial-gradient(circle,rgba(255,255,255,.22),rgba(66,239,179,.08) 35%,transparent 68%);filter:blur(2px)}
+.mc17-real-card .mc17-card-top small{color:#d8eee8;opacity:.72;letter-spacing:.27em;font-size:7px}
+.mc17-real-card .mc17-card-top b{font-size:17px;text-shadow:0 2px 12px rgba(0,0,0,.4)}
+.mc17-real-card .mc17-card-top strong{font-size:10px;letter-spacing:.14em;color:#f1faf7;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.mc17-real-card .mc17-card-middle{margin-top:25px}
+.mc17-real-card .mc17-chip{width:48px;height:35px;border-radius:8px;background:linear-gradient(135deg,#fff0a0 0%,#d6ad4b 42%,#8f6824 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),inset 0 0 10px rgba(255,255,255,.18),0 8px 18px rgba(0,0,0,.34)}
+.mc17-real-card .mc17-chip i{border-color:rgba(68,46,8,.48)}
+.mc17-real-card .mc17-contactless{font-size:27px;opacity:.95;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.mc17-real-card .mc17-card-number{font-size:19px;letter-spacing:.22em;font-weight:720;margin-top:23px;color:#f1f8f5;text-shadow:0 2px 9px rgba(0,0,0,.55)}
+.mc17-real-card .mc17-card-bottom{margin-top:17px}
+.mc17-real-card .mc17-card-bottom small{font-size:6px;letter-spacing:.2em;color:#c5d9d4;opacity:.7}
+.mc17-real-card .mc17-card-bottom b{font-size:8.5px;letter-spacing:.06em;color:#f4faf8}
+.mc17-real-card:global{isolation:isolate}
+.mc17-real-card{isolation:isolate}
+
+/* subtle Angola identity stripe — decorative, not an official bank mark */
+.mc17-real-card .mc17-card-top:after{content:"";position:absolute;left:0;top:0;width:42px;height:3px;border-radius:99px;background:linear-gradient(90deg,#c92a35 0 33%,#111 33% 66%,#d8ad3b 66%);opacity:.9}
+
+@media(max-width:700px){
+  .mc17-real-card{border-radius:23px;padding:20px 20px}
+  .mc17-real-card .mc17-card-number{font-size:17px;letter-spacing:.19em}
+  .mc17-real-card .mc17-card-top b{font-size:16px}
+}
+@media(max-width:520px){
+  .mc17-real-card{min-height:0;aspect-ratio:1.586;padding:18px 18px}
+  .mc17-real-card .mc17-card-middle{margin-top:22px}
+  .mc17-real-card .mc17-chip{width:44px;height:32px}
+  .mc17-real-card .mc17-card-number{font-size:14px;letter-spacing:.16em;margin-top:20px}
+  .mc17-real-card .mc17-card-bottom{margin-top:14px}
+}

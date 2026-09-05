@@ -495,3 +495,12 @@ button.is-pressed{transform:translateY(1px) scale(.98);filter:brightness(1.16);b
 .mc-atl-bottom{position:absolute;left:7%;right:7%;bottom:6.5%;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;}.mc-atl-bottom small{display:block;font-size:7px;letter-spacing:.22em;color:#22e88f;margin-bottom:4px}.mc-atl-bottom b{font-size:9px;color:#f4fffc;letter-spacing:.01em}.mc-atl-bottom>div:last-child{text-align:left;margin-right:19%;}
 .mc-atl-dashboard{margin:0 auto;}.mc-atl-list{margin-bottom:10px;}
 @media(max-width:600px){.mc-atl-card{min-height:0;border-radius:23px;padding:5.5% 7%;}.mc-atl-issuer span{font-size:11px}.mc-atl-issuer i{width:31px;height:24px;font-size:19px}.mc-atl-number{gap:12px;font-size:12px}.mc-atl-number strong{font-size:17px}.mc-atl-network{right:6%;top:48%}.mc-atl-bottom b{font-size:8px}.mc-atl-bottom>div:last-child{margin-right:16%;}}
+
+/* MEUCAPITAL_V22_6_CARD_FINAL
+   Cartão premium Angola-inspired / Millennium Atlântico presentation.
+   Dados sensíveis: apenas últimos 4 dígitos são apresentados.
+*/
+.mc-atl-card{transform:translateZ(0);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.mc-atl-card:hover{transform:translateY(-2px);box-shadow:0 28px 60px rgba(0,0,0,.52),0 0 26px rgba(32,232,143,.10),inset 0 1px 0 rgba(255,255,255,.22)}
+.mc-atl-card .mc-atl-glow{animation:mcCardGlow 3.2s ease-in-out infinite}
+@keyframes mcCardGlow{0%,100%{opacity:.65}50%{opacity:1}}

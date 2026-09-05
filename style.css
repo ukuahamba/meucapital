@@ -501,3 +501,15 @@ button.is-pressed{transform:translateY(1px) scale(.98);filter:brightness(1.16);b
 .mc-atl-dashboard{margin:0 auto;}.mc-atl-list{margin-bottom:10px;}
 @media(max-width:600px){.mc-atl-card{min-height:0;border-radius:24px;padding:5.2% 6.8%;}.mc-atl-issuer span{font-size:11px}.mc-atl-issuer i{width:32px;height:25px;font-size:19px}.mc-atl-mid{margin-top:7%;gap:17px}.mc-atl-chip{width:44px;height:32px}.mc-atl-contactless{font-size:30px}.mc-atl-number{gap:11px;font-size:12px;margin-top:4.5%}.mc-atl-number strong{font-size:17px;letter-spacing:.17em}.mc-atl-network{right:6.5%;bottom:23%;transform:scale(.9)}.mc-atl-bottom b{font-size:8px}.mc-atl-bottom>div:last-child{margin-right:16%;}}
 .mc-atl-card{transform:translateZ(0);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}.mc-atl-card:hover{transform:translateY(-2px);box-shadow:0 28px 60px rgba(0,0,0,.58),0 0 28px rgba(32,232,143,.12),inset 0 1px 0 rgba(255,255,255,.22)}.mc-atl-card .mc-atl-glow{animation:mcCardGlow 3.2s ease-in-out infinite}@keyframes mcCardGlow{0%,100%{opacity:.62}50%{opacity:1}}
+
+/* V23 — seleção manual do banco */
+#cardBankSelect{
+  appearance:auto;
+}
+.field-status[data-state="neutral"]{color:#e5b44f}
+.card-bank-choice{
+  border:1px solid rgba(57,221,160,.28);
+  background:rgba(57,221,160,.05);
+  border-radius:14px;
+  padding:12px 14px;
+}

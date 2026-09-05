@@ -266,7 +266,63 @@
   <div class="security-banner"><div><strong>Proteção de dados</strong><p>O MeuCapital não pede nem guarda PIN, CVV, palavra-passe bancária ou número completo do cartão.</p></div><span>🔒</span></div>
   <div class="cloud-sync-status" id="cloudSyncStatus" data-state="syncing">A preparar sincronização segura…</div>
   <div class="grid-2">
-    <article class="panel"><h2>Adicionar cartão</h2><p class="muted">Regista apenas informação de identificação. O reconhecimento é local e conservador. A base V22.1 foi reforçada com BINs públicos confirmados, incluindo Millennium Atlântico; quando não houver confirmação suficiente, o MeuCapital informa isso em vez de adivinhar. O BIN não é guardado.</p><div class="big-form"><div><label>Nome do cartão</label><input id="cardName" placeholder="Ex.: Cartão principal"></div><div><label>6 primeiros dígitos (BIN/IIN)</label><input id="cardBin" inputmode="numeric" maxlength="6" placeholder="Ex.: 457397"><small id="cardBankStatus" class="field-status">O emissor será reconhecido quando existir uma correspondência confirmada na base local.</small></div><div><label>Banco reconhecido</label><input id="cardIssuer" placeholder="Aguardando reconhecimento…" readonly></div><div><label>Últimos 4 dígitos</label><input id="cardLast4" inputmode="numeric" maxlength="4" placeholder="4587"></div><div><label>Tipo</label><select id="cardType"><option>Débito</option><option>Crédito</option><option>Pré-pago</option></select></div></div><button class="calculate" id="addCard">+ Adicionar cartão</button></article>
+    <article class="panel">
+  <h2>Adicionar cartão</h2>
+  <p class="muted">Escolhe o teu banco e regista apenas os dados necessários para controlar o cartão no MeuCapital. Não pedimos palavra-passe bancária, PIN, CVV nem o número completo do cartão.</p>
+  <div class="big-form">
+    <div>
+      <label>Nome do cartão</label>
+      <input id="cardName" placeholder="Ex.: Cartão principal">
+    </div>
+    <div>
+      <label>Banco</label>
+      <select id="cardBankSelect">
+        <option value="">Seleciona o teu banco</option>
+        <option>BAI</option>
+        <option>BFA</option>
+        <option>BIC</option>
+        <option>BPC</option>
+        <option>BNI</option>
+        <option>Banco Sol</option>
+        <option>Banco Económico</option>
+        <option>Banco Millennium Atlântico</option>
+        <option>Standard Bank Angola</option>
+        <option>Access Bank Angola</option>
+        <option>Banco Keve</option>
+        <option>Banco Yetu</option>
+        <option>Banco Valor</option>
+        <option>BCGA</option>
+        <option>BCI</option>
+        <option>Banco de Crédito do Sul</option>
+        <option>Banco de Investimento Rural</option>
+        <option>Finibanco Angola</option>
+        <option>Banco Comercial Angolano</option>
+        <option>Banco Comercial do Huambo</option>
+        <option>Banco Angolano de Negócios e Comércio</option>
+        <option>Outro banco</option>
+      </select>
+      <small id="cardBankStatus" class="field-status">Escolhe o banco que emitiu o cartão.</small>
+    </div>
+    <div>
+      <label>6 primeiros dígitos (BIN/IIN) — opcional</label>
+      <input id="cardBin" inputmode="numeric" maxlength="6" placeholder="Opcional: 500294">
+      <small class="field-status">Usado apenas para referência local. Não é guardado.</small>
+    </div>
+    <div>
+      <label>Últimos 4 dígitos</label>
+      <input id="cardLast4" inputmode="numeric" maxlength="4" placeholder="2502">
+    </div>
+    <div>
+      <label>Tipo</label>
+      <select id="cardType">
+        <option>Débito</option>
+        <option>Crédito</option>
+        <option>Pré-pago</option>
+      </select>
+    </div>
+  </div>
+  <button class="calculate" id="addCard">+ Adicionar cartão</button>
+</article>
     <article class="panel"><h2>Novo movimento</h2><p class="muted">Regista entradas e saídas para teres controlo do teu dinheiro.</p><div class="big-form"><div><label>Descrição</label><input id="txDesc" placeholder="Ex.: Supermercado"></div><div><label>Valor</label><input id="txAmount" type="number" min="0" step="0.01"></div><div><label>Tipo</label><select id="txType"><option>Despesa</option><option>Entrada</option></select></div><div><label>Categoria</label><select id="txCategory"><option>Alimentação</option><option>Transporte</option><option>Casa</option><option>Saúde</option><option>Lazer</option><option>Salário</option><option>Outro</option></select></div></div><button class="calculate" id="addTransaction">Registar movimento</button></article>
   </div>
   <div class="grid-2"><article class="panel"><div class="section-heading"><div><div class="panel-kicker">CARTEIRA</div><h2>Os meus cartões</h2></div></div><div id="cardsList" class="cards-list"></div></article><article class="panel"><div class="section-heading"><div><div class="panel-kicker">ATIVIDADE</div><h2>Movimentos recentes</h2></div></div><div id="transactionsList" class="cards-list"></div></article></div>

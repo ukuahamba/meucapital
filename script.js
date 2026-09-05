@@ -708,23 +708,53 @@ const dashboardSaveBtn=$("calculate"); if(dashboardSaveBtn) dashboardSaveBtn.onc
 $("calcSave").onclick=()=>{state.budget={salary:+$("calcSalary").value||0,fixed:+$("calcFixed").value||0,variable:+$("calcVariable").value||0,debt:+$("calcDebt").value||0,saving:+$("calcSaving").value||0};save();recordHistory();renderCalculator();renderDashboard();toast("Orçamento guardado!");};
 $("addGoal").onclick=()=>{const name=prompt("Nome da meta","Nova meta");if(!name)return;const target=Number(prompt("Valor da meta em Kz","100000"));if(!target)return;state.goals.push({name,target,saved:0,monthly:state.budget.saving});save();renderGoals();toast("Meta criada!");};
 $("addInvestment").onclick=()=>{const name=$("invName").value.trim();const amount=+$("invAmount").value||0;const rate=+$("invRate").value||0;if(!name||!amount)return toast("Preenche nome e valor do investimento.");state.investments.push({name,amount,rate});save();$("invName").value="";$("invAmount").value="";$("invRate").value="";renderInvestments();renderDashboard();toast("Investimento adicionado!")};
-$("cardBin")?.addEventListener("input",updateCardBank);
+$("cardBankSelect")?.addEventListener("change",()=>{
+  const bank=$("cardBankSelect").value||"";
+  if($("cardBankStatus")){
+    $("cardBankStatus").textContent=bank?`Banco selecionado: ${bank} ✓`:"Escolhe o banco que emitiu o cartão.";
+    $("cardBankStatus").dataset.state=bank?"ok":"idle";
+  }
+});
 $("cardLast4")?.addEventListener("input",()=>{$("cardLast4").value=String($("cardLast4").value||"").replace(/\D/g,"").slice(0,4)});
+$("cardBin")?.addEventListener("input",()=>{$("cardBin").value=String($("cardBin").value||"").replace(/\D/g,"").slice(0,6)});
+
 $("addCard").onclick=async()=>{
-  const btn=$("addCard"),name=$("cardName").value.trim(),bin=cleanBin($("cardBin").value),info=detectCardInfo(bin),last4=$("cardLast4").value.trim(),type=$("cardType").value;
-  if(!name||!/^[0-9]{6}$/.test(bin)||!/^[0-9]{4}$/.test(last4)){toast("Indica o nome, os 6 primeiros dígitos e os últimos 4 dígitos do cartão.");return;}
+  const btn=$("addCard");
+  const name=$("cardName").value.trim();
+  const bank=$("cardBankSelect").value.trim();
+  const last4=$("cardLast4").value.trim();
+  const type=$("cardType").value;
+  if(!name||!bank||!/^[0-9]{4}$/.test(last4)){
+    toast("Indica o nome, escolhe o banco e coloca os últimos 4 dígitos.");
+    return;
+  }
   buttonBusy(btn,true,"A guardar…");
-  const card={name,issuer:info.label,last4,type};
+  const card={name,issuer:bank,last4,type};
   try{
     const saved=await addCardToCloud(card);
-    state.cards=state.cards||[]; state.cards.unshift(saved||card); save(); renderCards(); renderDashboard();
-    $("cardName").value="";$("cardBin").value="";$("cardIssuer").value="";$("cardLast4").value=""; updateCardBank();
-    setCloudStatus("Cartão sincronizado com a tua conta ✓","ok");toast(`${info.known?info.bank:"Cartão identificado"} e cartão adicionado com segurança.`);
+    state.cards=state.cards||[];
+    state.cards.unshift(saved||card);
+    save(); renderCards(); renderDashboard();
+    $("cardName").value="";
+    $("cardBankSelect").value="";
+    $("cardBin").value="";
+    $("cardLast4").value="";
+    if($("cardBankStatus")){
+      $("cardBankStatus").textContent="Escolhe o banco que emitiu o cartão.";
+      $("cardBankStatus").dataset.state="idle";
+    }
+    setCloudStatus("Cartão sincronizado com a tua conta ✓","ok");
+    toast(`${bank} selecionado e cartão adicionado com segurança.`);
   }catch(err){
     console.error(err);
-    state.cards=state.cards||[];state.cards.unshift(card);save();renderCards();renderDashboard();
-    setCloudStatus("Não foi possível sincronizar o cartão.","error");toast("Cartão guardado localmente. Verifica a configuração da base de dados.");
-  }finally{buttonBusy(btn,false);}
+    state.cards=state.cards||[];
+    state.cards.unshift(card);
+    save(); renderCards(); renderDashboard();
+    setCloudStatus("Não foi possível sincronizar o cartão.","error");
+    toast("Cartão guardado localmente. Verifica a configuração da base de dados.");
+  }finally{
+    buttonBusy(btn,false);
+  }
 };
 $("addTransaction").onclick=async()=>{
   const btn=$("addTransaction"),desc=$("txDesc").value.trim(),amount=+$ ("txAmount").value||0,type=$("txType").value,category=$("txCategory").value;
